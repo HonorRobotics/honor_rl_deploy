@@ -1,0 +1,31 @@
+vita_boy:
+  is_sim: true
+  robot_name: "vita_boy"
+  robot_version: "V1"
+  control_dt: 0.002   # Control frequency 500Hz
+  num_dofs: 29        # the dof of arm, waist and leg
+  head_num_dofs: 2    # the dof of head
+  head_kp: [30, 30]
+  head_kd: [1, 1]
+
+  # topic name
+  lowcmd_topic: "/xlab/hr/low_cmd"
+  lowstate_topic: "/xlab/hr/low_state"
+
+  imu_topic: "/xlab/hr/body_upper_imu"
+  joy_topic: "/joy"     # /joy or /xlab/hr/joy_state_debug
+  joy_type: "keyboard"  # keyboard or game_controller or robot_remote_control
+
+  supported_states:
+  - FSMStatePassive
+  - FSMStateDamper
+  - FSMStateRecoveryStand
+  - FSMStateRLLocomotion
+  - FSMStateRLTracking
+
+  imu_yaw_bias: 0.0   # unit: rad
+  imu_pitch_bias: 0.0 # unit: rad
+  imu_roll_bias: 0.0  # unit: rad
+
+  bind_main_thread_to_core: true 
+  assigned_main_cores: [7]  # 6, 7

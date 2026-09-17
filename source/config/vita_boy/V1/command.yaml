@@ -1,0 +1,25 @@
+vita_boy:
+  pos_des_min: [-2.0, -1.0, 0.3]    # x, y, z
+  pos_des_max: [2.0, 1.0, 0.9]
+  vel_des_min: [-0.6, -0.45, -1.5]  # vx, vy, vz
+  vel_des_max: [1.5, 0.45, 1.5]
+
+  ori_des_min: [-20.0, -20.0, -30.0]  # unit: deg
+  ori_des_max: [20.0, 30.0, 30.0]
+  ome_des_min: [-1.0, -1.0, -1.57]    # unit: rad/s
+  ome_des_max: [1.0, 1.0, 1.57]
+
+  loco_pos_filter_para: [0.001, 0.004, 0.5]
+  loco_vel_filter_para: [0.005, 0.02, 0.02]
+  loco_ori_filter_para: [0.004, 0.1, 0.1]
+  loco_ome_filter_para: [0.001, 0.001, 0.005]
+
+  command_dead_zone:
+    vel_x_dead_zone_threshold: 0.1
+    vel_y_dead_zone_threshold: 0.2
+    vel_yaw_dead_zone_threshold: 0.1
+
+  joystick_command_max:
+    joystick_vel_x_max: 1.0
+    joystick_vel_y_max: 0.45
+    joystick_vel_yaw_max: 1.5

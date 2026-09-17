@@ -1,0 +1,21 @@
+# Build outputs
+build
+build_dist
+cmake_build
+devel
+install
+import
+
+# Logs
+log
+logs
+
+# Editor and tool caches
+.vscode/
+.cache
+.catkin_tools
+__pycache__
+
+# Generated files
+*.json
+*.csv

@@ -1,0 +1,66 @@
+<svg viewBox="0 0 1000 440" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title>FSM states</title>
+  <defs>
+    <filter id="sketchy" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.009 0.013" numOctaves="2" seed="11" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow-end" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#666666"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#666666"/>
+    </marker>
+  </defs>
+
+  <!-- ink layer: edges get the hand-drawn wobble -->
+  <g filter="url(#sketchy)">
+    <!-- entry arrow into Passive -->
+    <circle cx="230" cy="48" r="5" fill="#666666"/>
+    <path d="M230,56 L230,73" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow-end)"/>
+
+    <!-- outer rectangle edges -->
+    <path d="M290,130 L710,130" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <path d="M290,350 L710,350" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <path d="M230,290 L230,190" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-end="url(#arrow-end)"/>
+    <path d="M770,290 L770,190" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-end="url(#arrow-end)"/>
+
+    <!-- spokes to the center hub -->
+    <path d="M285.6,152.6 L444.4,217.4" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <path d="M714.4,152.6 L555.6,217.4" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <path d="M285.6,327.4 L444.4,262.6" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <path d="M714.4,327.4 L555.6,262.6" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+
+    <!-- one-way shortcuts: a gentle, near-straight kink just clearing the hub -->
+    <path d="M289.8,344.8 L534.0,323.4 L723.6,168.0" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+          marker-end="url(#arrow-end)"/>
+    <path d="M710.2,344.8 L466.0,323.4 L276.4,168.0" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+          marker-end="url(#arrow-end)"/>
+  </g>
+
+  <!-- node layer: regular, un-distorted circles -->
+  <g>
+    <circle cx="230" cy="130" r="55" fill="#eef1f4" stroke="#666666" stroke-width="3"/>
+    <circle cx="770" cy="130" r="55" fill="#eef1f4" stroke="#666666" stroke-width="3"/>
+    <circle cx="500" cy="240" r="58" fill="#fff2cf" stroke="#666666" stroke-width="3.5"/>
+    <circle cx="230" cy="350" r="55" fill="#e6f4ea" stroke="#666666" stroke-width="3"/>
+    <circle cx="770" cy="350" r="55" fill="#e6f4ea" stroke="#666666" stroke-width="3"/>
+  </g>
+
+  <!-- label layer: kept crisp, no wobble -->
+  <g fill="#1f1f1f" text-anchor="middle">
+    <text x="230" y="136" font-size="18">Passive</text>
+    <text x="770" y="136" font-size="18">Damper</text>
+    <text x="500" y="246" font-size="18">Recovery</text>
+    <text x="230" y="356" font-size="16">Locomotion</text>
+    <text x="770" y="356" font-size="16">Tracking</text>
+  </g>
+</svg>

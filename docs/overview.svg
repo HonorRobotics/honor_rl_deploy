@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1020 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title>Overview</title>
+  <defs>
+    <filter id="sketchy" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.009 0.013" numOctaves="2" seed="11" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow-end" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#666666"/>
+    </marker>
+  </defs>
+
+  <!-- ink layer: edges get the hand-drawn wobble -->
+  <g filter="url(#sketchy)">
+    <!-- joystick -> controller -->
+    <path d="M210,160 L332,160" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow-end)"/>
+
+    <!-- controller -> robot : low_cmd -->
+    <path d="M600,135 L692,135" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow-end)"/>
+
+    <!-- robot -> controller : low_state / imu -->
+    <path d="M692,195 L600,195" fill="none" stroke="#666666" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow-end)"/>
+  </g>
+
+  <!-- node layer: regular, un-distorted shapes -->
+  <g>
+    <circle cx="140" cy="160" r="70" fill="#eef1f4" stroke="#666666" stroke-width="3"/>
+    <rect x="340" y="90" width="260" height="140" rx="18" fill="#fff2cf" stroke="#666666" stroke-width="3.5"/>
+    <rect x="700" y="40" width="280" height="240" rx="18" fill="#f7f7f5" stroke="#666666" stroke-width="2.5" stroke-dasharray="2 8"/>
+    <rect x="730" y="85" width="220" height="70" rx="14" fill="#e9f0fb" stroke="#666666" stroke-width="3"/>
+    <rect x="730" y="175" width="220" height="70" rx="14" fill="#e6f4ea" stroke="#666666" stroke-width="3"/>
+  </g>
+
+  <!-- label layer: kept crisp, no wobble -->
+  <g fill="#1f1f1f" text-anchor="middle">
+    <text x="140" y="153" font-size="18">🎮 Joystick</text>
+    <text x="140" y="178" font-size="15">/joy</text>
+
+    <text x="470" y="150" font-size="19" font-weight="bold">motion_intelligence</text>
+    <text x="470" y="180" font-size="16">FSM + ONNX policy</text>
+
+    <text x="840" y="63" font-size="14" font-style="italic">either one</text>
+    <text x="840" y="125" font-size="17">🖥️ MuJoCo sim</text>
+    <text x="840" y="145" font-size="14">(honor_mujoco)</text>
+    <text x="840" y="215" font-size="17">🦿 Real VitaBoy robot</text>
+
+    <text x="646" y="120" font-size="14">low_cmd</text>
+    <text x="646" y="220" font-size="14">low_state / imu</text>
+  </g>
+</svg>
