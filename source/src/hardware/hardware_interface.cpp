@@ -8,8 +8,7 @@
 #include "common/helpers.hpp"
 #include "common/glog_sink.hpp"
 
-HardwareInterface::HardwareInterface(const std::string &config_path, std::shared_ptr<FSMData> fsm_data_ptr)
-{
+HardwareInterface::HardwareInterface(const std::string& config_path, std::shared_ptr<FSMData> fsm_data_ptr) {
     fsm_data_ptr_ = fsm_data_ptr;
     read_hw_yaml(config_path);
 
@@ -40,8 +39,7 @@ HardwareInterface::HardwareInterface(const std::string &config_path, std::shared
         try {
             executor_.spin();
         } catch (const std::exception& e) {
-            LOG(ERROR) << "[HardwareInterface] ROS executor stopped with exception: "
-                       << e.what();
+            LOG(ERROR) << "[HardwareInterface] ROS executor stopped with exception: " << e.what();
         }
     });
 }
@@ -59,7 +57,7 @@ void HardwareInterface::set_command(const Eigen::VectorXd& pos,
 
     auto low_command = interaction_msgs::msg::LowCommand();
     low_command.header.stamp = node_->get_clock()->now();
-    low_command.mode_pr = 0;    // MODE_PR = 0; MODE_RAW = 1;
+    low_command.mode_pr = 0;  // MODE_PR = 0; MODE_RAW = 1;
 
     for (int i = 0; i < hw_motor_dim_; ++i) {
         interaction_msgs::msg::MotorCommand md;
@@ -83,15 +81,13 @@ bool HardwareInterface::validate_motor_command_dimensions(
     const Eigen::VectorXd& tau) const
 {
     if (!low_state_subscriber_ptr_->is_low_state_init()) {
-        LOG_EVERY_N(WARNING, 500)
-            << "[HardwareInterface] Skip motor command: LowState is not ready";
+        LOG_EVERY_N(WARNING, 500) << "[HardwareInterface] Skip motor command: LowState is not ready";
         return false;
     }
 
     if (hw_motor_dim_ <= 0 || hw_motor_dim_ > NUM_MOTORS) {
-        LOG_EVERY_N(ERROR, 500)
-            << "[HardwareInterface] Skip motor command: invalid motor count "
-            << hw_motor_dim_ << ", expected in [1, " << NUM_MOTORS << "]";
+        LOG_EVERY_N(ERROR, 500) << "[HardwareInterface] Skip motor command: invalid motor count " << hw_motor_dim_
+                                << ", expected in [1, " << NUM_MOTORS << "]";
         return false;
     }
 
@@ -116,24 +112,21 @@ bool HardwareInterface::validate_motor_command_dimensions(
         !kp.head(required).allFinite() ||
         !kd.head(required).allFinite() ||
         !tau.head(required).allFinite()) {
-        LOG_EVERY_N(ERROR, 500)
-            << "[HardwareInterface] Skip motor command: command contains NaN or Inf";
+        LOG_EVERY_N(ERROR, 500) << "[HardwareInterface] Skip motor command: command contains NaN or Inf";
         return false;
     }
 
     return true;
 }
 
-std::shared_ptr<RobotState<double>> HardwareInterface::get_state()
-{
+std::shared_ptr<RobotState<double>> HardwareInterface::get_state() {
     auto low_state = low_state_subscriber_ptr_->get_latest_msg();
     auto imu = low_state_subscriber_ptr_->get_latest_imu_msg();
 
     fsm_data_ptr_->mode_machine = low_state.mode_machine;
-    if (!low_state.motor_state.empty() &&
-        low_state.motor_state.size() <= NUM_MOTORS) {
+    if (!low_state.motor_state.empty() && low_state.motor_state.size() <= NUM_MOTORS) {
         hw_motor_dim_ = static_cast<int>(low_state.motor_state.size());
-        for(int i = 0; i < low_state.motor_state.size(); ++i) {
+        for (int i = 0; i < low_state.motor_state.size(); ++i) {
             robot_state_ptr_->motor_state.q[i] = low_state.motor_state[i].pos_fb;
             robot_state_ptr_->motor_state.dq[i] = low_state.motor_state[i].vel_fb;
             robot_state_ptr_->motor_state.tau_est[i] = low_state.motor_state[i].tau_fb;
@@ -143,19 +136,14 @@ std::shared_ptr<RobotState<double>> HardwareInterface::get_state()
             robot_state_ptr_->motor_state.T_Rotor[i] = low_state.motor_state[i].temp_fb[1];
             robot_state_ptr_->motor_state.error_code[i] = low_state.motor_state[i].error_code;
         }
-
     } else {
         hw_motor_dim_ = 0;
-        LOG_EVERY_N(ERROR, 500)
-            << "[HardwareInterface] Invalid motor state count: "
-            << low_state.motor_state.size()
-            << ", expected in [1, " << NUM_MOTORS << "]";
+        LOG_EVERY_N(ERROR, 500) << "[HardwareInterface] Invalid motor state count: " << low_state.motor_state.size()
+                                << ", expected in [1, " << NUM_MOTORS << "]";
     }
 
-    if (fsm_data_ptr_->is_sim &&
-        static_cast<std::int32_t>(low_state.mode_machine) >= 0) {
-        LOG(ERROR) << "[HardwareInterface] current mode_machine is "
-                   << low_state.mode_machine
+    if (fsm_data_ptr_->is_sim && static_cast<std::int32_t>(low_state.mode_machine) >= 0) {
+        LOG(ERROR) << "[HardwareInterface] current mode_machine is " << low_state.mode_machine
                    << ", real robot is online, please set is_sim to false!";
     }
 
@@ -164,84 +152,65 @@ std::shared_ptr<RobotState<double>> HardwareInterface::get_state()
     return robot_state_ptr_;
 }
 
-std::shared_ptr<JoystickData> HardwareInterface::get_joy_state()
-{
+std::shared_ptr<JoystickData> HardwareInterface::get_joy_state() {
     if (keyboard_interface_ptr_) {
         return keyboard_interface_ptr_->get_latest_data();
     }
     return joy_subscriber_ptr_->get_latest_data();
 }
 
-bool HardwareInterface::get_joy_online()
-{
+bool HardwareInterface::get_joy_online() {
     if (keyboard_interface_ptr_) {
         return keyboard_interface_ptr_->is_joy_online();
     }
     return joy_subscriber_ptr_->is_joy_online();
 }
 
-bool HardwareInterface::is_init()
-{
-    return low_state_subscriber_ptr_->is_imu_init() &&
-            low_state_subscriber_ptr_->is_low_state_init() &&
-            is_joy_init();
+bool HardwareInterface::is_init() {
+    return low_state_subscriber_ptr_->is_imu_init() && low_state_subscriber_ptr_->is_low_state_init() && is_joy_init();
 }
 
-bool HardwareInterface::is_imu_init()
-{
+bool HardwareInterface::is_imu_init() {
     return low_state_subscriber_ptr_->is_imu_init();
 }
 
-bool HardwareInterface::is_low_state_init()
-{
+bool HardwareInterface::is_low_state_init() {
     return low_state_subscriber_ptr_->is_low_state_init();
 }
 
-bool HardwareInterface::is_joy_init()
-{
+bool HardwareInterface::is_joy_init() {
     if (keyboard_interface_ptr_) {
         return keyboard_interface_ptr_->is_joy_init();
     }
     return joy_subscriber_ptr_->is_joy_init();
 }
 
-void HardwareInterface::update_imu_state(const sensor_msgs::msg::Imu& imu)
-{
-    Eigen::Quaterniond quaternion(
-        imu.orientation.w,
-        imu.orientation.x,
-        imu.orientation.y,
-        imu.orientation.z);
+void HardwareInterface::update_imu_state(const sensor_msgs::msg::Imu& imu) {
+    Eigen::Quaterniond quaternion(imu.orientation.w,
+                                  imu.orientation.x,
+                                  imu.orientation.y,
+                                  imu.orientation.z);
 
     constexpr double kMinQuaternionNorm = 1e-6;
     const double quaternion_norm = quaternion.norm();
-    if (imu.orientation_covariance[0] < 0.0 ||
-        !quaternion.coeffs().allFinite() ||
-        !std::isfinite(quaternion_norm) ||
+    if (imu.orientation_covariance[0] < 0.0 || !quaternion.coeffs().allFinite() || !std::isfinite(quaternion_norm) ||
         quaternion_norm < kMinQuaternionNorm) {
-        LOG_EVERY_N(ERROR, 500)
-            << "[HardwareInterface] Invalid IMU orientation; keeping previous IMU state";
+        LOG_EVERY_N(ERROR, 500) << "[HardwareInterface] Invalid IMU orientation; keeping previous IMU state";
         return;
     }
     quaternion.normalize();
 
-    const Eigen::Quaterniond new_quaternion = add_roll_pitch_bias_to_quaternion(
-        quaternion, imu_zyx_bias_[2], imu_zyx_bias_[1]);
+    const Eigen::Quaterniond new_quaternion =
+        add_roll_pitch_bias_to_quaternion(quaternion, imu_zyx_bias_[2], imu_zyx_bias_[1]);
 
     robot_state_ptr_->imu.quaternion = new_quaternion;
     robot_state_ptr_->imu.euler_zyx = quaternion_to_euler_zyx(new_quaternion);
-    robot_state_ptr_->imu.gyroscope <<
-        imu.angular_velocity.x,
-        imu.angular_velocity.y,
-        imu.angular_velocity.z;
-    robot_state_ptr_->imu.accelerometer <<
-        imu.linear_acceleration.x,
-        imu.linear_acceleration.y,
+    robot_state_ptr_->imu.gyroscope << imu.angular_velocity.x, imu.angular_velocity.y, imu.angular_velocity.z;
+    robot_state_ptr_->imu.accelerometer << imu.linear_acceleration.x, imu.linear_acceleration.y,
         imu.linear_acceleration.z;
 }
 
-void HardwareInterface::read_hw_yaml(const std::string &config_path)
-{
+void HardwareInterface::read_hw_yaml(const std::string& config_path) {
     if (!fsm_data_ptr_) {
         throw std::invalid_argument("FSM data pointer cannot be null");
     }
@@ -251,9 +220,7 @@ void HardwareInterface::read_hw_yaml(const std::string &config_path)
         const std::string& robot_name = fsm_data_ptr_->robot_name;
         const YAML::Node config = root[robot_name];
         if (!config || !config.IsMap()) {
-            throw std::runtime_error(
-                "Robot configuration '" + robot_name + "' is missing in '" +
-                config_path + "'");
+            throw std::runtime_error("Robot configuration '" + robot_name + "' is missing in '" + config_path + "'");
         }
 
         const std::string low_cmd_topic = config["lowcmd_topic"].as<std::string>();
@@ -272,9 +239,7 @@ void HardwareInterface::read_hw_yaml(const std::string &config_path)
         joy_type_ = joy_type;
         imu_zyx_bias_ << imu_yaw_bias, imu_pitch_bias, imu_roll_bias;
     } catch (const YAML::Exception& error) {
-        throw std::runtime_error(
-            "Failed to read hardware configuration '" + config_path +
-            "': " + error.what());
+        throw std::runtime_error("Failed to read hardware configuration '" + config_path + "': " + error.what());
     }
 }
 

@@ -64,5 +64,9 @@ uv pip uninstall -y empy || true          # do not abort if empy is not installe
 uv pip install empy==3.3.4
 uv pip install matplotlib
 
+## dev tooling ##
+echo "==> dev tooling"
+uv tool install clang-format || echo "==> WARNING: failed to install clang-format"
+
 echo "==> Dependencies installed successfully."
 echo "====================================================="

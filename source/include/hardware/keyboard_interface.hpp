@@ -22,45 +22,44 @@
 //   r       : Recovery         (LB + X)
 //   l       : Locomotion       (LB + Y)
 //   m       : Motion tracking  (RB + X, only from Locomotion)
-class KeyboardInterface
-{
-public:
-  KeyboardInterface() = default;
-  ~KeyboardInterface();
+class KeyboardInterface {
+   public:
+    KeyboardInterface() = default;
+    ~KeyboardInterface();
 
-  void start();
-  void stop();
+    void start();
+    void stop();
 
-  std::shared_ptr<JoystickData> get_latest_data();
-  bool is_joy_online();
-  bool is_joy_init();
+    std::shared_ptr<JoystickData> get_latest_data();
+    bool is_joy_online();
+    bool is_joy_init();
 
-private:
-  using clock = std::chrono::steady_clock;
+   private:
+    using clock = std::chrono::steady_clock;
 
-  void read_loop();
-  void handle_key(char key);
+    void read_loop();
+    void handle_key(char key);
 
-  enum class EscState { kNone, kEsc, kCsi };
-  EscState esc_state_{EscState::kNone};
+    enum class EscState { kNone, kEsc, kCsi };
+    EscState esc_state_{EscState::kNone};
 
-  std::thread read_thread_;
-  std::atomic_bool running_{false};
-  std::atomic_bool is_init_{false};
-  bool tty_ok_{false};
-  termios saved_termios_{};
+    std::thread read_thread_;
+    std::atomic_bool running_{false};
+    std::atomic_bool is_init_{false};
+    bool tty_ok_{false};
+    termios saved_termios_{};
 
-  std::mutex data_mutex_;
-  float target_lx_{0.0F};
-  float target_ly_{0.0F};
-  float target_rx_{0.0F};
-  clock::time_point ts_lx_{};
-  clock::time_point ts_ly_{};
-  clock::time_point ts_rx_{};
+    std::mutex data_mutex_;
+    float target_lx_{0.0F};
+    float target_ly_{0.0F};
+    float target_rx_{0.0F};
+    clock::time_point ts_lx_{};
+    clock::time_point ts_ly_{};
+    clock::time_point ts_rx_{};
 
-  StateID pending_state_{PASSIVE};
-  bool has_pending_state_{false};
-  clock::time_point pending_since_{};
+    StateID pending_state_{PASSIVE};
+    bool has_pending_state_{false};
+    clock::time_point pending_since_{};
 };
 
 #endif  // KEYBOARD_INTERFACE_HPP

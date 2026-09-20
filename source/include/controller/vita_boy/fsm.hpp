@@ -9,13 +9,11 @@
 #include "controller/vita_boy/fsm_rl_locomotion.hpp"
 #include "controller/vita_boy/fsm_rl_tracking.hpp"
 
-
-class VitaBoyFSMFactory : public FSMFactory
-{
-public:
+class VitaBoyFSMFactory : public FSMFactory {
+   public:
     VitaBoyFSMFactory(const StateID& initial) : initial_state_(initial) {}
-    std::shared_ptr<FSMState> create_state(void *context, std::shared_ptr<FSMData> fsm_data_ptr, const std::string &state_name) override
-    {
+    std::shared_ptr<FSMState> create_state(void* context, std::shared_ptr<FSMData> fsm_data_ptr,
+                                           const std::string& state_name) override {
         if (state_name == "FSMStatePassive")
             return std::make_shared<FSMStatePassive>(fsm_data_ptr);
         else if (state_name == "FSMStateDamper")
@@ -25,18 +23,22 @@ public:
         else if (state_name == "FSMStateRLLocomotion")
             return std::make_shared<FSMStateRLLocomotion>(fsm_data_ptr);
         else if (state_name == "FSMStateRLTracking")
-            return std::make_shared<FSMStateRLTracking>(fsm_data_ptr, StateID::RL_TRACKING ,state_name);
+            return std::make_shared<FSMStateRLTracking>(fsm_data_ptr, StateID::RL_TRACKING, state_name);
         return nullptr;
     }
-    std::string get_type() const override { return "vita_boy"; }
+    std::string get_type() const override {
+        return "vita_boy";
+    }
 
-    std::vector<std::string> get_supported_states(std::shared_ptr<FSMData> fsm_data_ptr) const override
-    {
+    std::vector<std::string> get_supported_states(std::shared_ptr<FSMData> fsm_data_ptr) const override {
         return fsm_data_ptr->supported_states;
     }
 
-    StateID get_initial_state() const override { return initial_state_; }
-private:
+    StateID get_initial_state() const override {
+        return initial_state_;
+    }
+
+   private:
     StateID initial_state_;
 };
 

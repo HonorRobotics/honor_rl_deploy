@@ -13,8 +13,8 @@
 #include "common/helpers.hpp"
 
 class Controller {
-public:
-    Controller(const std::string &robot_name, const std::string &robot_version);
+   public:
+    Controller(const std::string& robot_name, const std::string& robot_version);
     ~Controller();
 
     void run();
@@ -24,9 +24,11 @@ public:
     void read_base_yaml(const std::string& config_path, const std::string& robot_name);
     void print_fsm_data();
     bool check_safety();
-    bool is_sim() { return fsm_data_ptr_->is_sim; };
+    bool is_sim() {
+        return fsm_data_ptr_->is_sim;
+    };
 
-private:
+   private:
     size_t counter_{0};
     double control_dt_{0.002};
     double cycle_time_{0.0};
@@ -52,4 +54,4 @@ private:
     std::shared_ptr<SafetyChecker> safety_checker_ptr_;
 };
 
-#endif // CONTROLLER_HPP
+#endif  // CONTROLLER_HPP

@@ -9,17 +9,17 @@
 class HardwareInterface;
 struct FSMData;
 
-class CommandInterface
-{
-public:
-    CommandInterface(const std::string &config_path, std::shared_ptr<HardwareInterface> hw_interface_ptr, std::shared_ptr<FSMData> fsm_data_ptr);
+class CommandInterface {
+   public:
+    CommandInterface(const std::string& config_path, std::shared_ptr<HardwareInterface> hw_interface_ptr,
+                     std::shared_ptr<FSMData> fsm_data_ptr);
     void update();
     void modify_cmd_for_safety();
 
-private:
+   private:
     void print_command();
     void reset_desired_command();
-    void read_cmd_config(const std::string &config_path);
+    void read_cmd_config(const std::string& config_path);
     void map_joystick_to_raw_cmd();
     void map_topic_to_raw_cmd();
     void filter_command();
@@ -55,4 +55,4 @@ private:
     DesiredCommand<double> des_raw_command_;
 };
 
-#endif // COMMAND_INTERFACE_HPP
+#endif  // COMMAND_INTERFACE_HPP

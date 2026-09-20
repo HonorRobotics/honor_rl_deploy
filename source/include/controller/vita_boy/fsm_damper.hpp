@@ -3,10 +3,8 @@
 
 #include "state_machine/fsm_state.hpp"
 
-
-class FSMStateDamper : public FSMState
-{
-public:
+class FSMStateDamper : public FSMState {
+   public:
     // Constructor
     FSMStateDamper(std::shared_ptr<FSMData> fsm_data_ptr);
 
@@ -22,9 +20,9 @@ public:
     // Resolve the next state
     StateID check_transition() override;
 
-private:
+   private:
     // Read config file.
-    void read_yaml(const std::string &config_path);
+    void read_yaml(const std::string& config_path);
 
     Eigen::VectorXd kp_;
     Eigen::VectorXd kd_;

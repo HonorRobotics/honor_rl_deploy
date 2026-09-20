@@ -232,14 +232,14 @@ check_robot.sh脚本会检查网络、SSH 登录与 `motion_intelligence.service
 在 [`base.yaml`](source/config/vita_boy/V1/base.yaml) 中把 `joy_type` 设为 `"game_controller"`，或者给 `run_motion_intelligence.sh` 传 `--joy-type game_controller`
 
 
-| 按键组合                             | 目标状态               |
-| ------------------------------------ | ---------------------- |
-| `LB` + `A`                           | Passive                |
-| `LB` + `B`                           | Damper                 |
-| `LB` + `X`                           | Recovery               |
-| `LB` + `Y`                           | Locomotion             |
-| `RB` + `X`（仅在 Locomotion 状态下） | Tracking               |
-| `LB` + `RB`                          | Damper（一键急停）     |
+| 按键组合                             | 目标状态           |
+| ------------------------------------ | ------------------ |
+| `LB` + `A`                           | Passive            |
+| `LB` + `B`                           | Damper             |
+| `LB` + `X`                           | Recovery           |
+| `LB` + `Y`                           | Locomotion         |
+| `RB` + `X`（仅在 Locomotion 状态下） | Tracking           |
+| `LB` + `RB`                          | Damper（一键急停） |
 
 左摇杆（仅在 Locomotion 状态下）：↕ 前进 / 后退（`vx`），↔ 左移 / 右移（`vy`）。
 右摇杆（仅在 Locomotion 状态下）：↔ 左转 / 右转（`vz`）。
@@ -249,15 +249,15 @@ check_robot.sh脚本会检查网络、SSH 登录与 `motion_intelligence.service
 在 [`base.yaml`](source/config/vita_boy/V1/base.yaml) 中把 `joy_type` 设为 `"robot_remote_control"`，或者给 `run_motion_intelligence.sh` 传 `--joy-type robot_remote_control`。
 
 
-| 遥控器组合                            | 目标状态               |
-| ------------------------------------- | ---------------------- |
-| `S1` + `R1`                           | Passive                |
-| `S1` + `R2`                           | Recovery               |
-| `S1` + `M6`                           | Damper                 |
-| `S1` + `R3`                           | Locomotion             |
-| `M2` + `R2`（仅在 Locomotion 状态下） | Tracking               |
-| `S1` + `M2`                           | Damper（一键急停）     |
-| `S1` + `S2`                           | 进入调试模式           |
+| 遥控器组合                            | 目标状态           |
+| ------------------------------------- | ------------------ |
+| `S1` + `R1`                           | Passive            |
+| `S1` + `R2`                           | Recovery           |
+| `S1` + `M6`                           | Damper             |
+| `S1` + `R3`                           | Locomotion         |
+| `M2` + `R2`（仅在 Locomotion 状态下） | Tracking           |
+| `S1` + `M2`                           | Damper（一键急停） |
+| `S1` + `S2`                           | 进入调试模式       |
 
 左摇杆（仅在 Locomotion 状态下）：↕ 前进 / 后退（`vx`），↔ 左移 / 右移（`vy`）。
 右摇杆（仅在 Locomotion 状态下）：↔ 左转 / 右转（`vz`）。
@@ -267,13 +267,13 @@ check_robot.sh脚本会检查网络、SSH 登录与 `motion_intelligence.service
 在 [`base.yaml`](source/config/vita_boy/V1/base.yaml) 中把 `joy_type` 设为 `"keyboard"`，或者给 `run_motion_intelligence.sh` 传 `--joy-type keyboard`。
 
 
-| 按键                                | 目标状态               |
-| ----------------------------------- | ---------------------- |
-| `P`                                 | Passive                |
-| `Space`                             | Damper                 |
-| `R`                                 | Recovery               |
-| `L`                                 | Locomotion             |
-| `M`（仅在 Locomotion 状态下）       | Tracking               |
+| 按键                          | 目标状态   |
+| ----------------------------- | ---------- |
+| `P`                           | Passive    |
+| `Space`                       | Damper     |
+| `R`                           | Recovery   |
+| `L`                           | Locomotion |
+| `M`（仅在 Locomotion 状态下） | Tracking   |
 
 移动（仅在 Locomotion 状态下）：`W`/`S` 前进 / 后退（`vx`）；`A`/`D` 左移 / 右移（`vy`）；`Q`/`E` 左转 / 右转（`vz`）。
 
@@ -284,6 +284,31 @@ check_robot.sh脚本会检查网络、SSH 登录与 `motion_intelligence.service
    建议在控制状态进入locomotion后，点击mujoco界面并按9键盘放下机器人，
    鼠标再点击run_motion_intelligence.sh终端，使用上表按键操作机器人。
 2. 建议的首次上电测试顺序——**Passive → Recovery → Locomotion → Tracking → Locomotion → Damper**。
+
+## 🔍 调试
+
+### 常用 ROS 2 话题
+
+```bash
+# 新开一个终端
+ros2 topic list
+
+# 打印话题内容
+ros2 topic echo --once /xlab/hr/low_state
+
+# 查看发布频率
+ros2 topic hz /xlab/hr/low_state
+```
+
+### 查看 glog 日志
+
+```bash
+# 新开一个终端
+cd /path/to/your/honor_rl_deploy
+
+# 打印log内容
+tail -f source/build/deploy.log
+```
 
 ## 🛠️ 二次开发
 
@@ -302,3 +327,7 @@ check_robot.sh脚本会检查网络、SSH 登录与 `motion_intelligence.service
         ├── run_motion_intelligence.sh     # 编译工程 + 控制器
         └── fastdds_profile.xml.template   # Fast DDS 网卡白名单配置
 ```
+
+## 📄 许可证
+
+本项目基于 [Apache License 2.0](LICENSE) 开源。

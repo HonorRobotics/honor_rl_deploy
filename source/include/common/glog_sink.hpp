@@ -12,7 +12,7 @@
 #include <iostream>
 #include <chrono>
 #include <sys/time.h>
-#include <vector> // thread pool
+#include <vector>  // thread pool
 
 // log message struct
 struct LogMessage {
@@ -23,22 +23,16 @@ struct LogMessage {
     std::string message;
 };
 class LogManager {
-public:
+   public:
     class CustomFileSink : public google::LogSink {
-    public:
+       public:
         explicit CustomFileSink(const std::string& base_filename);
         ~CustomFileSink() override;
 
-        void send(
-            google::LogSeverity severity,
-            const char* full_filename,
-            const char* base_filename,
-            int line,
-            const struct ::tm* tm_time,
-            const char* message,
-            size_t message_len) override;
+        void send(google::LogSeverity severity, const char* full_filename, const char* base_filename, int line,
+                  const struct ::tm* tm_time, const char* message, size_t message_len) override;
 
-    private:
+       private:
         void flush_logs();
         void start_flush_timer();
 
@@ -53,7 +47,7 @@ public:
         std::queue<LogMessage> log_queue_;
         bool running_;
         static constexpr size_t batch_size_ = 5;
-        static constexpr size_t thread_pool_size_ = 4; // Added: thread pool size
+        static constexpr size_t thread_pool_size_ = 4;  // Added: thread pool size
     };
 
     // Singleton accessor
@@ -65,10 +59,10 @@ public:
     // Initialize the logging system
     void Initialize(const std::string& log_file, const char* argv0);
 
-private:
+   private:
     LogManager() = default;
     ~LogManager();
     std::unique_ptr<CustomFileSink> custom_sink_;
 };
 
-#endif // GLOG_SINK_HPP
+#endif  // GLOG_SINK_HPP

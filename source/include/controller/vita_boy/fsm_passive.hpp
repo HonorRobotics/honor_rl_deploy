@@ -3,9 +3,8 @@
 
 #include "state_machine/fsm_state.hpp"
 
-class FSMStatePassive : public FSMState
-{
-public:
+class FSMStatePassive : public FSMState {
+   public:
     // Constructor
     FSMStatePassive(std::shared_ptr<FSMData> fsm_data_ptr);
 

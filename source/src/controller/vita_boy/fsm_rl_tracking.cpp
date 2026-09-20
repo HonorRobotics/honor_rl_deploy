@@ -11,13 +11,10 @@
 #include "cnpy.h"
 #include "common/helpers.hpp"
 
-namespace
-{
-using RowMajorMatrixXf =
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+namespace {
+using RowMajorMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-std::string shape_to_string(const std::vector<size_t>& shape)
-{
+std::string shape_to_string(const std::vector<size_t>& shape) {
     std::ostringstream stream;
     stream << '[';
     for (size_t i = 0; i < shape.size(); ++i) {
@@ -30,20 +27,14 @@ std::string shape_to_string(const std::vector<size_t>& shape)
     return stream.str();
 }
 
-void require_shape(const cnpy::NpyArray& array, const std::string& name,
-                   const std::vector<size_t>& expected)
-{
+void require_shape(const cnpy::NpyArray& array, const std::string& name, const std::vector<size_t>& expected) {
     if (array.shape != expected) {
-        throw std::runtime_error("NPZ array '" + name + "' has shape " +
-                                 shape_to_string(array.shape) + ", expected " +
+        throw std::runtime_error("NPZ array '" + name + "' has shape " + shape_to_string(array.shape) + ", expected " +
                                  shape_to_string(expected));
     }
 }
 
-RowMajorMatrixXf map_float_matrix(const cnpy::NpyArray& array,
-                                 const std::string& name, size_t rows,
-                                 size_t columns)
-{
+RowMajorMatrixXf map_float_matrix(const cnpy::NpyArray& array, const std::string& name, size_t rows, size_t columns) {
     require_shape(array, name, {rows, columns});
     if (array.word_size != sizeof(float)) {
         throw std::runtime_error("NPZ array '" + name + "' must use float32");
@@ -52,14 +43,12 @@ RowMajorMatrixXf map_float_matrix(const cnpy::NpyArray& array,
         throw std::runtime_error("NPZ array '" + name + "' must be C-contiguous");
     }
 
-    const Eigen::Map<const RowMajorMatrixXf> mapped(
-        array.data<float>(), static_cast<Eigen::Index>(rows),
-        static_cast<Eigen::Index>(columns));
+    const Eigen::Map<const RowMajorMatrixXf> mapped(array.data<float>(), static_cast<Eigen::Index>(rows),
+                                                    static_cast<Eigen::Index>(columns));
     return mapped;
 }
 
-size_t tensor_size(const std::vector<int64_t>& dimensions)
-{
+size_t tensor_size(const std::vector<int64_t>& dimensions) {
     size_t size = 1;
     for (const int64_t dimension : dimensions) {
         if (dimension <= 0) {
@@ -70,31 +59,22 @@ size_t tensor_size(const std::vector<int64_t>& dimensions)
     return size;
 }
 
-void require_vector_size(const Eigen::VectorXd& vector, int expected,
-                         const std::string& name)
-{
+void require_vector_size(const Eigen::VectorXd& vector, int expected, const std::string& name) {
     if (vector.size() != expected) {
-        throw std::runtime_error("Config field '" + name + "' has " +
-                                 std::to_string(vector.size()) +
-                                 " values, expected " +
-                                 std::to_string(expected));
+        throw std::runtime_error("Config field '" + name + "' has " + std::to_string(vector.size()) +
+                                 " values, expected " + std::to_string(expected));
     }
 }
 }  // namespace
 
-FSMStateRLTracking::FSMStateRLTracking(
-    std::shared_ptr<FSMData> fsm_data_ptr, StateID state_id,
-    std::string state_name)
-    : FSMRLBase(std::move(fsm_data_ptr), state_id, std::move(state_name))
-{
-    config_directory_ = "../config/" + fsm_data_ptr_->robot_name + "/" +
-                        fsm_data_ptr_->robot_version + "/rl_tracking";
+FSMStateRLTracking::FSMStateRLTracking(std::shared_ptr<FSMData> fsm_data_ptr, StateID state_id, std::string state_name)
+    : FSMRLBase(std::move(fsm_data_ptr), state_id, std::move(state_name)) {
+    config_directory_ = "../config/" + fsm_data_ptr_->robot_name + "/" + fsm_data_ptr_->robot_version + "/rl_tracking";
     initialize(config_directory_ + "/rl_tracking.yaml");
     init_rl_model_inference_thread();
 }
 
-void FSMStateRLTracking::initialize(const std::string& config_path)
-{
+void FSMStateRLTracking::initialize(const std::string& config_path) {
     read_config(config_path);
     validate_config();
     load_motions();
@@ -108,22 +88,18 @@ void FSMStateRLTracking::initialize(const std::string& config_path)
     initialize_observations();
     FSMRLBase::init_outputs();
 
-    LOG(INFO) << '[' << state_name_ << "] initialized " << motions_by_id_.size()
-              << " NPZ motions and " << policies_.size() << " policies";
+    LOG(INFO) << '[' << state_name_ << "] initialized " << motions_by_id_.size() << " NPZ motions and "
+              << policies_.size() << " policies";
 }
 
-void FSMStateRLTracking::read_config(const std::string& config_path)
-{
+void FSMStateRLTracking::read_config(const std::string& config_path) {
     const YAML::Node root = YAML::LoadFile(config_path);
     const YAML::Node config = root[fsm_data_ptr_->robot_name];
     if (!config) {
-        throw std::runtime_error("Missing robot config section '" +
-                                 fsm_data_ptr_->robot_name + "' in " +
-                                 config_path);
+        throw std::runtime_error("Missing robot config section '" + fsm_data_ptr_->robot_name + "' in " + config_path);
     }
 
-    read_vector_from_yaml(config["default_dof_pos"],
-                          rl_params_.default_dof_pos);
+    read_vector_from_yaml(config["default_dof_pos"], rl_params_.default_dof_pos);
     read_vector_from_yaml(config["kp"], rl_params_.kp);
     read_vector_from_yaml(config["kd"], rl_params_.kd);
     read_vector_from_yaml(config["action_scale"], rl_params_.action_scale);
@@ -137,14 +113,10 @@ void FSMStateRLTracking::read_config(const std::string& config_path)
     rl_params_.clip_obs = config["clip_obs"].as<double>();
     rl_params_.clip_action = config["clip_action"].as<double>();
     // onnx runtime options
-    rl_params_.intra_op_num_threads =
-        config["intra_op_num_threads"].as<int>();
-    rl_params_.inter_op_num_threads =
-        config["inter_op_num_threads"].as<int>();
-    rl_params_.bind_inference_thread_to_core =
-        config["bind_inference_thread_to_core"].as<bool>();
-    read_std_vector_int_from_yaml(config["assigned_inference_cores"],
-                                  rl_params_.assigned_inference_cores);
+    rl_params_.intra_op_num_threads = config["intra_op_num_threads"].as<int>();
+    rl_params_.inter_op_num_threads = config["inter_op_num_threads"].as<int>();
+    rl_params_.bind_inference_thread_to_core = config["bind_inference_thread_to_core"].as<bool>();
+    read_std_vector_int_from_yaml(config["assigned_inference_cores"], rl_params_.assigned_inference_cores);
 
     transition_time_ = config["transition_time"].as<double>();
     motion_prepare_time_ = config["motion_prepare_time"].as<double>();
@@ -185,10 +157,8 @@ void FSMStateRLTracking::read_config(const std::string& config_path)
     }
 }
 
-void FSMStateRLTracking::validate_config() const
-{
-    if (rl_params_.num_actions != kNumActions ||
-        fsm_data_ptr_->num_dofs != kNumActions) {
+void FSMStateRLTracking::validate_config() const {
+    if (rl_params_.num_actions != kNumActions || fsm_data_ptr_->num_dofs != kNumActions) {
         throw std::runtime_error("RL tracking requires exactly 29 body joints");
     }
     if (rl_params_.control_decimation <= 0 || fsm_data_ptr_->control_dt <= 0.0) {
@@ -202,23 +172,18 @@ void FSMStateRLTracking::validate_config() const
     if (rl_params_.clip_obs <= 0.0 || rl_params_.clip_action <= 0.0) {
         throw std::runtime_error("Observation and action clipping limits must be positive");
     }
-    if (rl_params_.intra_op_num_threads <= 0 ||
-        rl_params_.inter_op_num_threads <= 0) {
+    if (rl_params_.intra_op_num_threads <= 0 || rl_params_.inter_op_num_threads <= 0) {
         throw std::runtime_error("ONNX thread counts must be positive");
     }
-    if (rl_params_.bind_inference_thread_to_core &&
-        rl_params_.assigned_inference_cores.empty()) {
-        throw std::runtime_error(
-            "At least one inference core is required when CPU binding is enabled");
+    if (rl_params_.bind_inference_thread_to_core && rl_params_.assigned_inference_cores.empty()) {
+        throw std::runtime_error("At least one inference core is required when CPU binding is enabled");
     }
-    if (std::any_of(rl_params_.assigned_inference_cores.begin(),
-                    rl_params_.assigned_inference_cores.end(),
+    if (std::any_of(rl_params_.assigned_inference_cores.begin(), rl_params_.assigned_inference_cores.end(),
                     [](int core) { return core < 0; })) {
         throw std::runtime_error("Inference core IDs cannot be negative");
     }
 
-    require_vector_size(rl_params_.default_dof_pos, kNumActions,
-                        "default_dof_pos");
+    require_vector_size(rl_params_.default_dof_pos, kNumActions, "default_dof_pos");
     require_vector_size(rl_params_.kp, kNumActions, "kp");
     require_vector_size(rl_params_.kd, kNumActions, "kd");
     require_vector_size(rl_params_.action_scale, kNumActions, "action_scale");
@@ -232,28 +197,23 @@ void FSMStateRLTracking::validate_config() const
         }
         const double mapping_value = rl_params_.joint_mapping[i];
         const int joint_index = static_cast<int>(std::lround(mapping_value));
-        if (std::abs(mapping_value - joint_index) > 1e-9 || joint_index < 0 ||
-            joint_index >= kNumActions || mapped_joint[joint_index]) {
-            throw std::runtime_error(
-                "joint_mapping must be a permutation of [0, 28]");
+        if (std::abs(mapping_value - joint_index) > 1e-9 || joint_index < 0 || joint_index >= kNumActions ||
+            mapped_joint[joint_index]) {
+            throw std::runtime_error("joint_mapping must be a permutation of [0, 28]");
         }
         mapped_joint[joint_index] = true;
     }
 
     std::unordered_set<size_t> model_ids;
     for (const ModelConfig& model : model_configs_) {
-        if (model.model_file.size() < 6 ||
-            model.model_file.substr(model.model_file.size() - 5) != ".onnx") {
-            throw std::runtime_error(
-                "Model ID " + std::to_string(model.model_id) +
-                " must reference an ONNX file");
+        if (model.model_file.size() < 6 || model.model_file.substr(model.model_file.size() - 5) != ".onnx") {
+            throw std::runtime_error("Model ID " + std::to_string(model.model_id) + " must reference an ONNX file");
         }
         if (model.prop_hist <= 0 || model.demo_hist <= 0) {
             throw std::runtime_error("Model history lengths must be positive");
         }
         if (!model_ids.insert(model.model_id).second) {
-            throw std::runtime_error("Duplicate model_id " +
-                                     std::to_string(model.model_id));
+            throw std::runtime_error("Duplicate model_id " + std::to_string(model.model_id));
         }
     }
 
@@ -261,31 +221,23 @@ void FSMStateRLTracking::validate_config() const
     bool has_default_motion = false;
     for (const MotionConfig& motion : motion_configs_) {
         if (!motion_ids.insert(motion.motion_id).second) {
-            throw std::runtime_error("Duplicate motion_id " +
-                                     std::to_string(motion.motion_id));
+            throw std::runtime_error("Duplicate motion_id " + std::to_string(motion.motion_id));
         }
         if (model_ids.count(motion.model_id) == 0) {
-            throw std::runtime_error(
-                "Motion ID " + std::to_string(motion.motion_id) + " ('" +
-                motion.motion_file + "') references an unknown model_id");
+            throw std::runtime_error("Motion ID " + std::to_string(motion.motion_id) + " ('" + motion.motion_file +
+                                     "') references an unknown model_id");
         }
-        if (motion.motion_file.size() < 5 ||
-            motion.motion_file.substr(motion.motion_file.size() - 4) != ".npz") {
-            throw std::runtime_error(
-                "Motion ID " + std::to_string(motion.motion_id) +
-                " must reference an NPZ file");
+        if (motion.motion_file.size() < 5 || motion.motion_file.substr(motion.motion_file.size() - 4) != ".npz") {
+            throw std::runtime_error("Motion ID " + std::to_string(motion.motion_id) + " must reference an NPZ file");
         }
-        has_default_motion = has_default_motion ||
-                             motion.motion_id == default_motion_id_;
+        has_default_motion = has_default_motion || motion.motion_id == default_motion_id_;
     }
     if (!has_default_motion) {
         throw std::runtime_error("default_motion_id is not present in motions");
     }
 }
 
-FSMStateRLTracking::MotionData FSMStateRLTracking::load_motion(
-    const MotionConfig& config) const
-{
+FSMStateRLTracking::MotionData FSMStateRLTracking::load_motion(const MotionConfig& config) const {
     const std::string path = config_directory_ + "/" + config.motion_file;
     try {
         // fps: legacy motions use int64, Isaac Lab exports float32
@@ -301,118 +253,91 @@ FSMStateRLTracking::MotionData FSMStateRLTracking::load_motion(
         } else if (fps_array.word_size == sizeof(int64_t)) {
             fps_value = static_cast<double>(fps_array.data<int64_t>()[0]);
         } else {
-            throw std::runtime_error(
-                "NPZ array 'fps' must use float32 or int64");
+            throw std::runtime_error("NPZ array 'fps' must use float32 or int64");
         }
         const double rounded_fps = std::round(fps_value);
-        if (!std::isfinite(fps_value) || fps_value <= 0.0 ||
-            fps_value > std::numeric_limits<int>::max() ||
+        if (!std::isfinite(fps_value) || fps_value <= 0.0 || fps_value > std::numeric_limits<int>::max() ||
             std::abs(fps_value - rounded_fps) > 1e-6) {
             throw std::runtime_error("NPZ fps must be a positive integer value");
         }
 
         // joint pos / vel, [T, 29]
-        const cnpy::NpyArray joint_pos_array =
-            cnpy::npz_load(path, "joint_pos");
-        if (joint_pos_array.shape.size() != 2 ||
-            joint_pos_array.shape[1] != kNumActions) {
+        const cnpy::NpyArray joint_pos_array = cnpy::npz_load(path, "joint_pos");
+        if (joint_pos_array.shape.size() != 2 || joint_pos_array.shape[1] != kNumActions) {
             throw std::runtime_error("NPZ joint_pos must have shape [T, 29]");
         }
         const size_t total_frames = joint_pos_array.shape[0];
-        const RowMajorMatrixXf joint_pos = map_float_matrix(
-            joint_pos_array, "joint_pos", total_frames, kNumActions);
+        const RowMajorMatrixXf joint_pos = map_float_matrix(joint_pos_array, "joint_pos", total_frames, kNumActions);
 
-        const cnpy::NpyArray joint_vel_array =
-            cnpy::npz_load(path, "joint_vel");
-        const RowMajorMatrixXf joint_vel = map_float_matrix(
-            joint_vel_array, "joint_vel", total_frames, kNumActions);
+        const cnpy::NpyArray joint_vel_array = cnpy::npz_load(path, "joint_vel");
+        const RowMajorMatrixXf joint_vel = map_float_matrix(joint_vel_array, "joint_vel", total_frames, kNumActions);
 
         // body quat, [T, B, 4] wxyz
-        const cnpy::NpyArray body_quat_array =
-            cnpy::npz_load(path, "body_quat_w");
-        if (body_quat_array.shape.size() != 3 ||
-            body_quat_array.shape[0] != total_frames ||
-            body_quat_array.shape[1] <= kAnchorBodyIndex ||
-            body_quat_array.shape[2] != 4 ||
-            body_quat_array.word_size != sizeof(float) ||
-            body_quat_array.fortran_order) {
+        const cnpy::NpyArray body_quat_array = cnpy::npz_load(path, "body_quat_w");
+        if (body_quat_array.shape.size() != 3 || body_quat_array.shape[0] != total_frames ||
+            body_quat_array.shape[1] <= kAnchorBodyIndex || body_quat_array.shape[2] != 4 ||
+            body_quat_array.word_size != sizeof(float) || body_quat_array.fortran_order) {
             throw std::runtime_error(
                 "NPZ body_quat_w must be a C-order float32 array [T, B, 4] "
                 "with body index 9");
         }
         const size_t body_count = body_quat_array.shape[1];
-        const Eigen::Map<const RowMajorMatrixXf> body_quat(
-            body_quat_array.data<float>(), static_cast<Eigen::Index>(total_frames),
-            static_cast<Eigen::Index>(body_count * 4));
+        const Eigen::Map<const RowMajorMatrixXf> body_quat(body_quat_array.data<float>(),
+                                                           static_cast<Eigen::Index>(total_frames),
+                                                           static_cast<Eigen::Index>(body_count * 4));
 
         // trim to [start_frame, end_frame)
-        const size_t end_frame =
-            config.end_frame == 0 ? total_frames : config.end_frame;
+        const size_t end_frame = config.end_frame == 0 ? total_frames : config.end_frame;
         if (config.start_frame >= end_frame || end_frame > total_frames) {
-            throw std::runtime_error("Invalid frame range [" +
-                                     std::to_string(config.start_frame) + ", " +
+            throw std::runtime_error("Invalid frame range [" + std::to_string(config.start_frame) + ", " +
                                      std::to_string(end_frame) + ") for " + path);
         }
-        const Eigen::Index start =
-            static_cast<Eigen::Index>(config.start_frame);
-        const Eigen::Index frame_count =
-            static_cast<Eigen::Index>(end_frame - config.start_frame);
+        const Eigen::Index start = static_cast<Eigen::Index>(config.start_frame);
+        const Eigen::Index frame_count = static_cast<Eigen::Index>(end_frame - config.start_frame);
 
         MotionData motion;
         motion.config = config;
         motion.fps = static_cast<int>(rounded_fps);
         motion.joint_pos = joint_pos.middleRows(start, frame_count);
         motion.joint_vel = joint_vel.middleRows(start, frame_count);
-        motion.anchor_quat_w = body_quat.block(
-            start, kAnchorBodyIndex * 4, frame_count, 4);
+        motion.anchor_quat_w = body_quat.block(start, kAnchorBodyIndex * 4, frame_count, 4);
 
-        if (!motion.joint_pos.allFinite() || !motion.joint_vel.allFinite() ||
-            !motion.anchor_quat_w.allFinite()) {
+        if (!motion.joint_pos.allFinite() || !motion.joint_vel.allFinite() || !motion.anchor_quat_w.allFinite()) {
             throw std::runtime_error("NPZ motion contains NaN or infinity: " + path);
         }
         // normalize anchor quat
-        for (Eigen::Index frame = 0; frame < motion.anchor_quat_w.rows();
-             ++frame) {
+        for (Eigen::Index frame = 0; frame < motion.anchor_quat_w.rows(); ++frame) {
             const float norm = motion.anchor_quat_w.row(frame).norm();
             if (norm < 1e-6F) {
-                throw std::runtime_error("NPZ contains an invalid anchor quaternion: " +
-                                         path);
+                throw std::runtime_error("NPZ contains an invalid anchor quaternion: " + path);
             }
             motion.anchor_quat_w.row(frame) /= norm;
         }
 
         // fps must match the policy rate
-        const double expected_fps =
-            1.0 / (fsm_data_ptr_->control_dt * rl_params_.control_decimation);
+        const double expected_fps = 1.0 / (fsm_data_ptr_->control_dt * rl_params_.control_decimation);
         if (std::abs(expected_fps - motion.fps) > 1e-6) {
-            throw std::runtime_error("Motion fps " + std::to_string(motion.fps) +
-                                     " does not match policy frequency " +
+            throw std::runtime_error("Motion fps " + std::to_string(motion.fps) + " does not match policy frequency " +
                                      std::to_string(expected_fps));
         }
 
-        LOG(INFO) << '[' << state_name_ << "] loaded motion id="
-                  << config.motion_id << ", file='" << config.motion_file
-                  << "' (frames=" << motion.frame_count()
-                  << ", fps=" << motion.fps << ") from " << path;
+        LOG(INFO) << '[' << state_name_ << "] loaded motion id=" << config.motion_id << ", file='" << config.motion_file
+                  << "' (frames=" << motion.frame_count() << ", fps=" << motion.fps << ") from " << path;
         return motion;
     } catch (const std::exception& error) {
-        throw std::runtime_error(
-            "Failed to load motion ID " + std::to_string(config.motion_id) +
-            " ('" + config.motion_file + "') from " + path + ": " +
-            error.what());
+        throw std::runtime_error("Failed to load motion ID " + std::to_string(config.motion_id) + " ('" +
+                                 config.motion_file + "') from " + path + ": " + error.what());
     }
 }
 
-void FSMStateRLTracking::load_motions()
-{
+void FSMStateRLTracking::load_motions() {
     motions_by_id_.clear();
     for (const MotionConfig& config : motion_configs_) {
         motions_by_id_.emplace(config.motion_id, load_motion(config));
     }
 }
 
-void FSMStateRLTracking::initialize_policies()
-{
+void FSMStateRLTracking::initialize_policies() {
     policies_.clear();
     policy_index_by_id_.clear();
     policies_.reserve(model_configs_.size());
@@ -422,38 +347,26 @@ void FSMStateRLTracking::initialize_policies()
         policy.config = config;
         policy.path = config_directory_ + "/" + config.model_file;
         policy.session = std::make_unique<XbotOnnxRuntime>();
-        if (!policy.session->init_onnx_runtime(
-                policy.path, rl_params_.intra_op_num_threads,
-                rl_params_.inter_op_num_threads)) {
-            throw std::runtime_error("Failed to initialize ONNX model " +
-                                     policy.path);
+        if (!policy.session->init_onnx_runtime(policy.path, rl_params_.intra_op_num_threads,
+                                               rl_params_.inter_op_num_threads)) {
+            throw std::runtime_error("Failed to initialize ONNX model " + policy.path);
         }
 
         policy.input_dims = policy.session->get_input_dims();
         policy.output_dims = policy.session->get_output_dims();
-        const std::vector<std::string> input_names =
-            policy.session->get_input_names();
-        const std::vector<std::string> output_names =
-            policy.session->get_output_names();
+        const std::vector<std::string> input_names = policy.session->get_input_names();
+        const std::vector<std::string> output_names = policy.session->get_output_names();
         // onnx interface: obs -> actions
         if (policy.input_dims.size() != 1 || policy.output_dims.size() != 1) {
-            throw std::runtime_error(
-                "Tracking policies must expose one input and one output: " +
-                policy.path);
+            throw std::runtime_error("Tracking policies must expose one input and one output: " + policy.path);
         }
-        if (input_names != std::vector<std::string>{"obs"} ||
-            output_names != std::vector<std::string>{"actions"}) {
-            throw std::runtime_error(
-                "Tracking policy interface must be [obs] -> [actions]: " +
-                policy.path);
+        if (input_names != std::vector<std::string>{"obs"} || output_names != std::vector<std::string>{"actions"}) {
+            throw std::runtime_error("Tracking policy interface must be [obs] -> [actions]: " + policy.path);
         }
-        const std::vector<int64_t> expected_input_dims{
-            1, static_cast<int64_t>(config.observation_buffer_size())};
+        const std::vector<int64_t> expected_input_dims{1, static_cast<int64_t>(config.observation_buffer_size())};
         const std::vector<int64_t> expected_output_dims{1, kNumActions};
-        if (policy.input_dims[0] != expected_input_dims ||
-            policy.output_dims[0] != expected_output_dims) {
-            throw std::runtime_error("Unexpected ONNX input/output dimensions: " +
-                                     policy.path);
+        if (policy.input_dims[0] != expected_input_dims || policy.output_dims[0] != expected_output_dims) {
+            throw std::runtime_error("Unexpected ONNX input/output dimensions: " + policy.path);
         }
 
         // allocate io buffers
@@ -476,34 +389,28 @@ void FSMStateRLTracking::initialize_policies()
 
         policy_index_by_id_.emplace(config.model_id, policies_.size());
         policies_.push_back(std::move(policy));
-        LOG(INFO) << '[' << state_name_ << "] loaded policy id="
-                  << config.model_id << " from " << policies_.back().path;
+        LOG(INFO) << '[' << state_name_ << "] loaded policy id=" << config.model_id << " from "
+                  << policies_.back().path;
     }
 }
 
-void FSMStateRLTracking::initialize_observations()
-{
+void FSMStateRLTracking::initialize_observations() {
     FSMRLBase::init_obs();
     initialize_history();
 }
 
-void FSMStateRLTracking::initialize_history()
-{
+void FSMStateRLTracking::initialize_history() {
     // sizes depend on the active policy
     const ModelConfig& config = active_policy().config;
     obs_prop_vec_.assign(kNumProprioceptiveObservations, 0.0);
     obs_demo_vec_.assign(kNumDemoObservations, 0.0);
     obs_buffer_vec_.assign(config.observation_buffer_size(), 0.0);
-    obs_hist_prop_vec2d_.assign(
-        config.prop_hist,
-        std::vector<double>(kNumProprioceptiveObservations, 0.0));
-    obs_hist_demo_vec2d_.assign(
-        config.demo_hist, std::vector<double>(kNumDemoObservations, 0.0));
+    obs_hist_prop_vec2d_.assign(config.prop_hist, std::vector<double>(kNumProprioceptiveObservations, 0.0));
+    obs_hist_demo_vec2d_.assign(config.demo_hist, std::vector<double>(kNumDemoObservations, 0.0));
     first_update_hist_ = true;
 }
 
-void FSMStateRLTracking::onEnter()
-{
+void FSMStateRLTracking::onEnter() {
     LOG(INFO) << state_name_ << "::onEnter()";
     // wait for the in-flight inference
     rl_model_inference_running_ = false;
@@ -519,8 +426,7 @@ void FSMStateRLTracking::onEnter()
     actions_.setZero();
 
     // smoothing start
-    q_cmd_init_ =
-        fsm_data_ptr_->robot_command_ptr->motor_command.q.head(kNumActions);
+    q_cmd_init_ = fsm_data_ptr_->robot_command_ptr->motor_command.q.head(kNumActions);
     {
         std::lock_guard<std::mutex> command_lock(command_mutex_);
         des_dof_pos_ = q_cmd_init_;
@@ -544,15 +450,13 @@ void FSMStateRLTracking::onEnter()
     }
 }
 
-void FSMStateRLTracking::run()
-{
+void FSMStateRLTracking::run() {
     ++counter_;
 
     // sim single thread: inline inference
     if (fsm_data_ptr_->is_sim && is_single_thread_) {
         ++rl_control_count_sim_single_thread_;
-        if (rl_control_count_sim_single_thread_ >=
-            static_cast<size_t>(rl_params_.control_decimation)) {
+        if (rl_control_count_sim_single_thread_ >= static_cast<size_t>(rl_params_.control_decimation)) {
             run_model();
             rl_control_count_sim_single_thread_ = 0;
         }
@@ -565,15 +469,12 @@ void FSMStateRLTracking::run()
         desired_dof_pos = des_dof_pos_;
     }
     // smooth to the policy target
-    const Eigen::VectorXd q_cmd = forder_cos_smooth(
-        desired_dof_pos, q_cmd_init_, fsm_data_ptr_->control_dt, counter_,
-        transition_time_);
-    const Eigen::VectorXd kp = forder_cos_smooth(
-        rl_params_.kp, last_fsm_kp_, fsm_data_ptr_->control_dt, counter_,
-        transition_time_);
-    const Eigen::VectorXd kd = forder_cos_smooth(
-        rl_params_.kd, last_fsm_kd_, fsm_data_ptr_->control_dt, counter_,
-        transition_time_);
+    const Eigen::VectorXd q_cmd =
+        forder_cos_smooth(desired_dof_pos, q_cmd_init_, fsm_data_ptr_->control_dt, counter_, transition_time_);
+    const Eigen::VectorXd kp =
+        forder_cos_smooth(rl_params_.kp, last_fsm_kp_, fsm_data_ptr_->control_dt, counter_, transition_time_);
+    const Eigen::VectorXd kd =
+        forder_cos_smooth(rl_params_.kd, last_fsm_kd_, fsm_data_ptr_->control_dt, counter_, transition_time_);
 
     {
         std::lock_guard<std::mutex> lock(motion_mutex_);
@@ -586,8 +487,7 @@ void FSMStateRLTracking::run()
 
         // report progress
         const MotionData& motion = active_motion_locked();
-        const double duration =
-            static_cast<double>(motion.frame_count()) / motion.fps;
+        const double duration = static_cast<double>(motion.frame_count()) / motion.fps;
         interface.schedule = get_percentage(motion_cmd_time_, duration);
         if (interface.schedule >= 100 && !send_result_) {
             send_result_ = true;
@@ -615,11 +515,9 @@ void FSMStateRLTracking::run()
     }
 }
 
-void FSMStateRLTracking::run_model()
-{
+void FSMStateRLTracking::run_model() {
     std::lock_guard<std::mutex> inference_lock(inference_mutex_);
-    if (!(fsm_data_ptr_->is_sim && is_single_thread_) &&
-        !rl_model_inference_running_) {
+    if (!(fsm_data_ptr_->is_sim && is_single_thread_) && !rl_model_inference_running_) {
         return;
     }
 
@@ -634,16 +532,13 @@ void FSMStateRLTracking::run_model()
     rl_timer_.end_timer();
 }
 
-void FSMStateRLTracking::update_active_motion()
-{
-    size_t requested_motion_id =
-        fsm_data_ptr_->desired_command_ptr->motion_id;
+void FSMStateRLTracking::update_active_motion() {
+    size_t requested_motion_id = fsm_data_ptr_->desired_command_ptr->motion_id;
     // unknown id -> default, warn once
     if (motions_by_id_.count(requested_motion_id) == 0) {
         if (last_rejected_motion_id_ != requested_motion_id) {
-            LOG(WARNING) << '[' << state_name_ << "] unsupported motion_id "
-                         << requested_motion_id << ", using default motion_id "
-                         << default_motion_id_;
+            LOG(WARNING) << '[' << state_name_ << "] unsupported motion_id " << requested_motion_id
+                         << ", using default motion_id " << default_motion_id_;
             last_rejected_motion_id_ = requested_motion_id;
         }
         requested_motion_id = default_motion_id_;
@@ -653,15 +548,12 @@ void FSMStateRLTracking::update_active_motion()
     activate_motion(requested_motion_id);
 }
 
-void FSMStateRLTracking::activate_motion(size_t motion_id)
-{
+void FSMStateRLTracking::activate_motion(size_t motion_id) {
     const auto motion_it = motions_by_id_.find(motion_id);
     if (motion_it == motions_by_id_.end()) {
-        throw std::runtime_error("Cannot activate unknown motion_id " +
-                                 std::to_string(motion_id));
+        throw std::runtime_error("Cannot activate unknown motion_id " + std::to_string(motion_id));
     }
-    const auto policy_it =
-        policy_index_by_id_.find(motion_it->second.config.model_id);
+    const auto policy_it = policy_index_by_id_.find(motion_it->second.config.model_id);
     if (policy_it == policy_index_by_id_.end()) {
         throw std::runtime_error("Motion references an unloaded policy");
     }
@@ -677,13 +569,11 @@ void FSMStateRLTracking::activate_motion(size_t motion_id)
     }
     initialize_history();
 
-    LOG(INFO) << '[' << state_name_ << "] activated motion id=" << motion_id
-              << ", file='" << motion_it->second.config.motion_file
-              << "', model_id=" << motion_it->second.config.model_id;
+    LOG(INFO) << '[' << state_name_ << "] activated motion id=" << motion_id << ", file='"
+              << motion_it->second.config.motion_file << "', model_id=" << motion_it->second.config.model_id;
 }
 
-void FSMStateRLTracking::reset_motion_progress_locked()
-{
+void FSMStateRLTracking::reset_motion_progress_locked() {
     motion_cmd_time_ = -motion_prepare_time_;
     reset_track_motion_cmd_time_ = true;
     init_demo_yaw_flag_ = false;
@@ -693,19 +583,15 @@ void FSMStateRLTracking::reset_motion_progress_locked()
     fsm_data_ptr_->interface_parameter_ptr_->result = 100;
 }
 
-void FSMStateRLTracking::update_measured()
-{
+void FSMStateRLTracking::update_measured() {
     std::lock_guard<std::mutex> lock(obs_mutex_);
     obs_.ang_vel = fsm_data_ptr_->robot_state_ptr->imu.gyroscope;
     obs_.base_quat = fsm_data_ptr_->robot_state_ptr->imu.quaternion;
-    obs_.dof_pos =
-        fsm_data_ptr_->robot_state_ptr->motor_state.q.head(kNumActions);
-    obs_.dof_vel =
-        fsm_data_ptr_->robot_state_ptr->motor_state.dq.head(kNumActions);
+    obs_.dof_pos = fsm_data_ptr_->robot_state_ptr->motor_state.q.head(kNumActions);
+    obs_.dof_vel = fsm_data_ptr_->robot_state_ptr->motor_state.dq.head(kNumActions);
 }
 
-void FSMStateRLTracking::update_motion_reference()
-{
+void FSMStateRLTracking::update_motion_reference() {
     std::lock_guard<std::mutex> lock(motion_mutex_);
     // advance playback
     if (reset_track_motion_cmd_time_) {
@@ -717,9 +603,7 @@ void FSMStateRLTracking::update_motion_reference()
 
     const MotionData& motion = active_motion_locked();
     const int last_frame = static_cast<int>(motion.frame_count()) - 1;
-    const int frame = std::clamp(
-        static_cast<int>(std::lround(motion_cmd_time_ * motion.fps)), 0,
-        last_frame);
+    const int frame = std::clamp(static_cast<int>(std::lround(motion_cmd_time_ * motion.fps)), 0, last_frame);
 
     // demo obs: [joint_pos(29), joint_vel(29)]
     const Eigen::Index frame_index = static_cast<Eigen::Index>(frame);
@@ -729,25 +613,20 @@ void FSMStateRLTracking::update_motion_reference()
     }
 
     const auto quat = motion.anchor_quat_w.row(frame_index);
-    ref_anchor_quat_global_ =
-        Eigen::Quaterniond(quat[0], quat[1], quat[2], quat[3]);
+    ref_anchor_quat_global_ = Eigen::Quaterniond(quat[0], quat[1], quat[2], quat[3]);
 
     // align demo yaw, once per motion
     if (!init_demo_yaw_flag_) {
         const double current_yaw = quat_to_euler_zyx(obs_.base_quat)[0];
-        const double demo_yaw =
-            quat_to_euler_zyx(ref_anchor_quat_global_)[0];
-        const double yaw_offset =
-            shortest_angular_distance(demo_yaw, current_yaw);
-        quat_yaw_from_demo_to_curr_ = Eigen::Quaterniond(
-            Eigen::AngleAxisd(yaw_offset, Eigen::Vector3d::UnitZ()));
+        const double demo_yaw = quat_to_euler_zyx(ref_anchor_quat_global_)[0];
+        const double yaw_offset = shortest_angular_distance(demo_yaw, current_yaw);
+        quat_yaw_from_demo_to_curr_ = Eigen::Quaterniond(Eigen::AngleAxisd(yaw_offset, Eigen::Vector3d::UnitZ()));
         quat_yaw_from_demo_to_curr_.normalize();
         init_demo_yaw_flag_ = true;
     }
 }
 
-void FSMStateRLTracking::update_observation()
-{
+void FSMStateRLTracking::update_observation() {
     update_measured();
 
     // robot order -> policy order
@@ -755,27 +634,21 @@ void FSMStateRLTracking::update_observation()
     Eigen::VectorXd dof_vel_policy(kNumActions);
     Eigen::VectorXd default_dof_pos_policy(kNumActions);
     for (int i = 0; i < kNumActions; ++i) {
-        const int mapped_index =
-            static_cast<int>(rl_params_.joint_mapping[i]);
+        const int mapped_index = static_cast<int>(rl_params_.joint_mapping[i]);
         dof_pos_policy[i] = obs_.dof_pos[mapped_index];
         dof_vel_policy[i] = obs_.dof_vel[mapped_index];
-        default_dof_pos_policy[i] =
-            rl_params_.default_dof_pos[mapped_index];
+        default_dof_pos_policy[i] = rl_params_.default_dof_pos[mapped_index];
     }
 
     update_motion_reference();
 
     // measured torso -> reference torso
     const Eigen::Quaterniond desired_anchor_quat =
-        quaternion_multiplication_optimized(quat_yaw_from_demo_to_curr_,
-                                            ref_anchor_quat_global_);
-    const Eigen::Quaterniond measured_anchor_quat = compute_torso_quat(
-        obs_.base_quat, obs_.dof_pos.segment<3>(12));
+        quaternion_multiplication_optimized(quat_yaw_from_demo_to_curr_, ref_anchor_quat_global_);
+    const Eigen::Quaterniond measured_anchor_quat = compute_torso_quat(obs_.base_quat, obs_.dof_pos.segment<3>(12));
     const Eigen::Quaterniond relative_quat =
-        quaternion_multiplication_optimized(
-            quat_inverse(measured_anchor_quat), desired_anchor_quat);
-    const Eigen::Matrix3d relative_rotation =
-        quaternion_to_matrix(relative_quat);
+        quaternion_multiplication_optimized(quat_inverse(measured_anchor_quat), desired_anchor_quat);
+    const Eigen::Matrix3d relative_rotation = quaternion_to_matrix(relative_quat);
 
     Eigen::VectorXd observation(kNumProprioceptiveObservations);
     int index = 0;
@@ -786,17 +659,13 @@ void FSMStateRLTracking::update_observation()
         relative_rotation(2, 0), relative_rotation(2, 1);
     index += 6;
     // angular velocity
-    observation.segment<3>(index) =
-        obs_.ang_vel * rl_params_.ang_vel_scale;
+    observation.segment<3>(index) = obs_.ang_vel * rl_params_.ang_vel_scale;
     index += 3;
     // q
-    observation.segment(index, kNumActions) =
-        (dof_pos_policy - default_dof_pos_policy) *
-        rl_params_.dof_pos_scale;
+    observation.segment(index, kNumActions) = (dof_pos_policy - default_dof_pos_policy) * rl_params_.dof_pos_scale;
     index += kNumActions;
     // dq
-    observation.segment(index, kNumActions) =
-        dof_vel_policy * rl_params_.dof_vel_scale;
+    observation.segment(index, kNumActions) = dof_vel_policy * rl_params_.dof_vel_scale;
     index += kNumActions;
     // last action
     observation.segment(index, kNumActions) = last_actions_;
@@ -807,25 +676,20 @@ void FSMStateRLTracking::update_observation()
     }
     // clamp obs
     for (int i = 0; i < observation.size(); ++i) {
-        obs_prop_vec_[i] =
-            clamp(observation[i], -rl_params_.clip_obs, rl_params_.clip_obs);
+        obs_prop_vec_[i] = clamp(observation[i], -rl_params_.clip_obs, rl_params_.clip_obs);
     }
 }
 
-void FSMStateRLTracking::update_history()
-{
+void FSMStateRLTracking::update_history() {
     update_observation_history();
     obs_buffer_vec_ = build_observation_buffer();
 }
 
-void FSMStateRLTracking::update_observation_history()
-{
+void FSMStateRLTracking::update_observation_history() {
     // after reset: fill every slot
     if (first_update_hist_) {
-        obs_hist_prop_vec2d_.assign(active_policy().config.prop_hist,
-                                    obs_prop_vec_);
-        obs_hist_demo_vec2d_.assign(active_policy().config.demo_hist,
-                                    obs_demo_vec_);
+        obs_hist_prop_vec2d_.assign(active_policy().config.prop_hist, obs_prop_vec_);
+        obs_hist_demo_vec2d_.assign(active_policy().config.demo_hist, obs_demo_vec_);
         first_update_hist_ = false;
         return;
     }
@@ -837,8 +701,7 @@ void FSMStateRLTracking::update_observation_history()
     obs_hist_demo_vec2d_.push_back(obs_demo_vec_);
 }
 
-std::vector<double> FSMStateRLTracking::build_observation_buffer() const
-{
+std::vector<double> FSMStateRLTracking::build_observation_buffer() const {
     // demo history first, then prop
     std::vector<double> buffer;
     buffer.reserve(active_policy().config.observation_buffer_size());
@@ -851,18 +714,15 @@ std::vector<double> FSMStateRLTracking::build_observation_buffer() const
     return buffer;
 }
 
-void FSMStateRLTracking::update_action()
-{
+void FSMStateRLTracking::update_action() {
     PolicyRuntime& policy = active_policy();
-    if (policy.input_buffers.size() != 1 ||
-        policy.input_buffers[0].size() != obs_buffer_vec_.size()) {
+    if (policy.input_buffers.size() != 1 || policy.input_buffers[0].size() != obs_buffer_vec_.size()) {
         throw std::logic_error("Policy input buffer size mismatch");
     }
 
     // update policy input
     for (size_t i = 0; i < obs_buffer_vec_.size(); ++i) {
-        policy.input_buffers[0][i] =
-            static_cast<float>(obs_buffer_vec_[i]);
+        policy.input_buffers[0][i] = static_cast<float>(obs_buffer_vec_[i]);
     }
 
     // inference model
@@ -875,24 +735,19 @@ void FSMStateRLTracking::update_action()
 
     // get onnx output
     for (int i = 0; i < kNumActions; ++i) {
-        actions_[i] = clamp(policy.output_buffers[0][i],
-                            -rl_params_.clip_action,
-                            rl_params_.clip_action);
+        actions_[i] = clamp(policy.output_buffers[0][i], -rl_params_.clip_action, rl_params_.clip_action);
     }
 
     // policy order -> robot order
     Eigen::VectorXd actions_robot_order(kNumActions);
     for (int i = 0; i < kNumActions; ++i) {
-        const int mapped_index =
-            static_cast<int>(rl_params_.joint_mapping[i]);
+        const int mapped_index = static_cast<int>(rl_params_.joint_mapping[i]);
         actions_robot_order[mapped_index] = actions_[i];
     }
     // scale around the default pose
     Eigen::VectorXd desired_dof_pos(kNumActions);
     for (int i = 0; i < kNumActions; ++i) {
-        desired_dof_pos[i] = rl_params_.default_dof_pos[i] +
-                             rl_params_.action_scale[i] *
-                                 actions_robot_order[i];
+        desired_dof_pos[i] = rl_params_.default_dof_pos[i] + rl_params_.action_scale[i] * actions_robot_order[i];
     }
     {
         std::lock_guard<std::mutex> command_lock(command_mutex_);
@@ -901,49 +756,38 @@ void FSMStateRLTracking::update_action()
     last_actions_ = actions_;
 }
 
-const FSMStateRLTracking::MotionData&
-FSMStateRLTracking::active_motion_locked() const
-{
+const FSMStateRLTracking::MotionData& FSMStateRLTracking::active_motion_locked() const {
     return motions_by_id_.at(active_motion_id_);
 }
 
-FSMStateRLTracking::PolicyRuntime& FSMStateRLTracking::active_policy()
-{
+FSMStateRLTracking::PolicyRuntime& FSMStateRLTracking::active_policy() {
     return policies_.at(active_policy_index_);
 }
 
-const FSMStateRLTracking::PolicyRuntime&
-FSMStateRLTracking::active_policy() const
-{
+const FSMStateRLTracking::PolicyRuntime& FSMStateRLTracking::active_policy() const {
     return policies_.at(active_policy_index_);
 }
 
-Eigen::Quaterniond FSMStateRLTracking::compute_torso_quat(
-    const Eigen::Quaterniond& pelvis_quat,
-    const Eigen::Vector3d& waist_position) const
-{
+Eigen::Quaterniond FSMStateRLTracking::compute_torso_quat(const Eigen::Quaterniond& pelvis_quat,
+                                                          const Eigen::Vector3d& waist_position) const {
     // pelvis * waist (yaw, roll, pitch)
-    Eigen::Quaterniond torso_quat =
-        pelvis_quat.normalized() *
-        Eigen::AngleAxisd(waist_position[0], Eigen::Vector3d::UnitZ()) *
-        Eigen::AngleAxisd(waist_position[1], Eigen::Vector3d::UnitX()) *
-        Eigen::AngleAxisd(waist_position[2], Eigen::Vector3d::UnitY());
+    Eigen::Quaterniond torso_quat = pelvis_quat.normalized() *
+                                    Eigen::AngleAxisd(waist_position[0], Eigen::Vector3d::UnitZ()) *
+                                    Eigen::AngleAxisd(waist_position[1], Eigen::Vector3d::UnitX()) *
+                                    Eigen::AngleAxisd(waist_position[2], Eigen::Vector3d::UnitY());
     torso_quat.normalize();
     return torso_quat;
 }
 
-void FSMStateRLTracking::onExit()
-{
+void FSMStateRLTracking::onExit() {
     // wait for the in-flight inference
     rl_model_inference_running_ = false;
     std::lock_guard<std::mutex> inference_lock(inference_mutex_);
     LOG(INFO) << state_name_ << "::onExit()";
 }
 
-StateID FSMStateRLTracking::check_transition()
-{
-    const StateID requested_state =
-        fsm_data_ptr_->desired_command_ptr->state_id;
+StateID FSMStateRLTracking::check_transition() {
+    const StateID requested_state = fsm_data_ptr_->desired_command_ptr->state_id;
     switch (requested_state) {
         case StateID::RL_TRACKING:
             return state_id_;
@@ -953,26 +797,20 @@ StateID FSMStateRLTracking::check_transition()
         case StateID::RL_LOCOMOTION:
             return requested_state;
         default:
-            LOG(WARNING) << "Bad Request: Cannot transition from "
-                         << StateID::RL_TRACKING << " to "
-                         << requested_state;
+            LOG(WARNING) << "Bad Request: Cannot transition from " << StateID::RL_TRACKING << " to " << requested_state;
             return state_id_;
     }
 }
 
-FSMStateRLTracking::~FSMStateRLTracking()
-{
+FSMStateRLTracking::~FSMStateRLTracking() {
     rl_model_inference_running_ = false;
     controller_running_ = false;
     if (rl_model_inference_thread_.joinable()) {
         rl_model_inference_thread_.join();
     }
-    LOG(INFO) << '[' << state_name_ << "] inference thread stopped; total max/avg="
-              << rl_timer_.get_max_interval_in_milliseconds() << "/"
+    LOG(INFO) << '[' << state_name_
+              << "] inference thread stopped; total max/avg=" << rl_timer_.get_max_interval_in_milliseconds() << "/"
               << rl_timer_.get_average_in_milliseconds()
-              << " ms, ONNX max/avg="
-              << rl_action_inference_timer_.get_max_interval_in_milliseconds()
-              << "/"
-              << rl_action_inference_timer_.get_average_in_milliseconds()
-              << " ms";
+              << " ms, ONNX max/avg=" << rl_action_inference_timer_.get_max_interval_in_milliseconds() << "/"
+              << rl_action_inference_timer_.get_average_in_milliseconds() << " ms";
 }

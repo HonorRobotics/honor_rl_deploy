@@ -48,6 +48,6 @@ struct InterfaceParameter {
         state = 0;
     }
 };
-}
+}  // namespace interface
 
-#endif // INTERFACE_PARAMETER_HPP
+#endif  // INTERFACE_PARAMETER_HPP

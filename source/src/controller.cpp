@@ -21,8 +21,7 @@
 
 #include "argparse/argparse.hpp"
 
-Controller::Controller(const std::string &robot_name, const std::string &robot_version)
-{
+Controller::Controller(const std::string& robot_name, const std::string& robot_version) {
     const std::time_t now = std::time(nullptr);
     std::tm local_time{};
     localtime_r(&now, &local_time);
@@ -46,29 +45,21 @@ Controller::Controller(const std::string &robot_name, const std::string &robot_v
     safety_checker_ptr_ = std::make_shared<SafetyChecker>(fsm_data_ptr_);
 
     // auto load FSM by robot_name
-    if (!FSMManager::get_instance().is_type_supported(robot_name))
-    {
+    if (!FSMManager::get_instance().is_type_supported(robot_name)) {
         throw std::runtime_error("No FSM registered for robot: " + robot_name);
     }
 
-    fsm_ptr_ = FSMManager::get_instance().create_FSM(
-        robot_name, robot_version, fsm_data_ptr_, this);
-    if (!fsm_ptr_)
-    {
-        throw std::runtime_error(
-            "Failed to create FSM for robot: " + robot_name +
-            ", version: " + robot_version);
+    fsm_ptr_ = FSMManager::get_instance().create_FSM(robot_name, robot_version, fsm_data_ptr_, this);
+    if (!fsm_ptr_) {
+        throw std::runtime_error("Failed to create FSM for robot: " + robot_name + ", version: " + robot_version);
     }
 }
 
-void Controller::read_base_yaml(
-    const std::string& config_path, const std::string& robot_name) {
-    try
-    {
+void Controller::read_base_yaml(const std::string& config_path, const std::string& robot_name) {
+    try {
         const YAML::Node config = YAML::LoadFile(config_path)[robot_name];
         if (!config || !config.IsMap()) {
-            throw std::runtime_error(
-                "Missing or invalid '" + robot_name + "' configuration");
+            throw std::runtime_error("Missing or invalid '" + robot_name + "' configuration");
         }
 
         fsm_data_ptr_->is_sim = config["is_sim"].as<bool>();
@@ -82,16 +73,12 @@ void Controller::read_base_yaml(
         for (const auto& state : config["supported_states"]) {
             fsm_data_ptr_->supported_states.push_back(state.as<std::string>());
         }
-    }
-    catch (const std::exception &e)
-    {
-        throw std::runtime_error(
-            "Failed to load base configuration '" + config_path + "': " + e.what());
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to load base configuration '" + config_path + "': " + e.what());
     }
 }
 
-void Controller::pre_update_interface()
-{
+void Controller::pre_update_interface() {
     // update estimation
     est_interface_ptr_->update();
 
@@ -107,14 +94,12 @@ void Controller::pre_update_interface()
     }
 }
 
-bool Controller::check_safety()
-{
+bool Controller::check_safety() {
     auto state_id = fsm_data_ptr_->current_state_id;
     // for some state, safety is always true
     if (state_id == StateID::PASSIVE ||
         state_id == StateID::DAMPER ||
-        state_id == StateID::RECOVERY_STAND
-    ) {
+        state_id == StateID::RECOVERY_STAND) {
         // check imu norm
         safety_ = safety_checker_ptr_->check_imu_quaternion_norm();
     } else {
@@ -137,8 +122,7 @@ bool Controller::check_safety()
     return safety_;
 }
 
-void Controller::print_fsm_data()
-{
+void Controller::print_fsm_data() {
     std::ostringstream oss;
     const auto append_vector = [&oss](const Eigen::VectorXd& values) {
         oss << '[';
@@ -172,8 +156,7 @@ void Controller::print_fsm_data()
     LOG(INFO) << oss.str();
 }
 
-void Controller::post_update_interface()
-{
+void Controller::post_update_interface() {
     fsm_data_ptr_->current_state_id = fsm_ptr_->get_current_state_id();
 
     hw_interface_ptr_->set_command(fsm_data_ptr_->robot_command_ptr->motor_command.q,
@@ -183,12 +166,11 @@ void Controller::post_update_interface()
                                    fsm_data_ptr_->robot_command_ptr->motor_command.tau);
 }
 
-void Controller::run()
-{
+void Controller::run() {
     try {
         using Clock = std::chrono::steady_clock;
-        const auto control_period = std::chrono::duration_cast<Clock::duration>(
-            std::chrono::duration<double>(control_dt_));
+        const auto control_period =
+            std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(control_dt_));
         auto next_tick = Clock::now();
         auto previous_cycle_start = next_tick;
         bool has_previous_cycle = false;
@@ -200,37 +182,36 @@ void Controller::run()
             const auto cycle_start = Clock::now();
 
             if (has_previous_cycle) {
-                const double actual_period = std::chrono::duration<double>(
-                    cycle_start - previous_cycle_start).count();
+                const double actual_period = std::chrono::duration<double>(cycle_start - previous_cycle_start).count();
                 actual_period_sum_ += actual_period;
                 actual_period_max_ = std::max(actual_period_max_, actual_period);
                 scheduling_sample_count_++;
             }
             if (has_previous_cycle && cycle_start > scheduled_start) {
-                const double wakeup_lateness = std::chrono::duration<double>(
-                    cycle_start - scheduled_start).count();
+                const double wakeup_lateness = std::chrono::duration<double>(cycle_start - scheduled_start).count();
                 wakeup_lateness_sum_ += wakeup_lateness;
-                wakeup_lateness_max_ = std::max(
-                    wakeup_lateness_max_, wakeup_lateness);
+                wakeup_lateness_max_ = std::max(wakeup_lateness_max_, wakeup_lateness);
             }
             previous_cycle_start = cycle_start;
             has_previous_cycle = true;
 
             fsm_timer_.start_timer();
-            pre_update_interface();    //previous: retrieve status and commands from hardware interfaces
+            pre_update_interface();  // previous: retrieve status and commands from hardware interfaces
             if (hw_interface_ptr_->is_init()) {
                 if (!fsm_running_) {
                     LOG(INFO) << "[Controller::run()] Info: FSM is running...";
                     fsm_running_ = true;
                 }
-                fsm_ptr_->run();       //step: run control state machines (such as RL controllers)
+                fsm_ptr_->run();  // step: run control state machines (such as RL controllers)
             } else {
                 if (!hw_interface_ptr_->is_imu_init()) {
                     LOG_EVERY_N(ERROR, 500) << "[Controller::run()] Error: IMU is not ready, please check hardware!!!";
                 } else if (!hw_interface_ptr_->is_low_state_init()) {
-                    LOG_EVERY_N(ERROR, 500) << "[Controller::run()] Error: Motor is not ready, please check hardware!!!";
+                    LOG_EVERY_N(ERROR, 500)
+                        << "[Controller::run()] Error: Motor is not ready, please check hardware!!!";
                 } else if (!hw_interface_ptr_->is_joy_init()) {
-                    LOG_EVERY_N(ERROR, 500) << "[Controller::run()] Error: Joy stick is not ready, please check hardware!!!";
+                    LOG_EVERY_N(ERROR, 500)
+                        << "[Controller::run()] Error: Joy stick is not ready, please check hardware!!!";
                 }
             }
             post_update_interface();  // post: set commands to hardware interface
@@ -244,14 +225,11 @@ void Controller::run()
                 std::this_thread::sleep_until(next_tick);
             } else {
                 const auto lateness = cycle_end - next_tick;
-                const double deadline_lateness =
-                    std::chrono::duration<double>(lateness).count();
+                const double deadline_lateness = std::chrono::duration<double>(lateness).count();
                 missed_deadline_count_++;
-                deadline_lateness_max_ = std::max(
-                    deadline_lateness_max_, deadline_lateness);
+                deadline_lateness_max_ = std::max(deadline_lateness_max_, deadline_lateness);
                 LOG_EVERY_N(WARNING, 500)
-                    << "[Controller::run()] Control deadline missed by: "
-                    << deadline_lateness << " s"
+                    << "[Controller::run()] Control deadline missed by: " << deadline_lateness << " s"
                     << " cycle_time: " << cycle_time_ << " s"
                     << " scheduled time: " << counter_ * control_dt_ << " s";
 
@@ -269,20 +247,17 @@ void Controller::run()
     }
 }
 
-Controller::~Controller()
-{
+Controller::~Controller() {
     fsm_ptr_->Stop();
     std::stringstream ss;
     ss << "\n########################################################################";
     ss << "\n### Controller Benchmarking";
     ss << "\n###   Maximum : " << fsm_timer_.get_max_interval_in_milliseconds() << "[ms].";
     ss << "\n###   Average : " << fsm_timer_.get_average_in_milliseconds() << "[ms].";
-    const double average_actual_period = scheduling_sample_count_ > 0
-        ? actual_period_sum_ / static_cast<double>(scheduling_sample_count_)
-        : 0.0;
-    const double average_wakeup_lateness = scheduling_sample_count_ > 0
-        ? wakeup_lateness_sum_ / static_cast<double>(scheduling_sample_count_)
-        : 0.0;
+    const double average_actual_period =
+        scheduling_sample_count_ > 0 ? actual_period_sum_ / static_cast<double>(scheduling_sample_count_) : 0.0;
+    const double average_wakeup_lateness =
+        scheduling_sample_count_ > 0 ? wakeup_lateness_sum_ / static_cast<double>(scheduling_sample_count_) : 0.0;
     ss << "\n### Scheduling Metrics";
     ss << "\n###   Target Period          : " << control_dt_ * 1000.0 << "[ms].";
     ss << "\n###   Average Actual Period  : " << average_actual_period * 1000.0 << "[ms].";
@@ -300,17 +275,12 @@ Controller::~Controller()
     LOG(INFO) << ss.str();
 }
 
-void get_bind_info_from_yaml(
-    const std::string& config_path,
-    const std::string& robot_name,
-    bool& bind_main_thread_to_core,
-    std::vector<int>& assigned_main_cores) {
-    try
-    {
+void get_bind_info_from_yaml(const std::string& config_path, const std::string& robot_name,
+                             bool& bind_main_thread_to_core, std::vector<int>& assigned_main_cores) {
+    try {
         const YAML::Node config = YAML::LoadFile(config_path)[robot_name];
         if (!config || !config.IsMap()) {
-            throw std::runtime_error(
-                "Missing or invalid '" + robot_name + "' configuration");
+            throw std::runtime_error("Missing or invalid '" + robot_name + "' configuration");
         }
 
         const bool parsed_bind = config["bind_main_thread_to_core"].as<bool>();
@@ -319,16 +289,12 @@ void get_bind_info_from_yaml(
 
         bind_main_thread_to_core = parsed_bind;
         assigned_main_cores = std::move(parsed_cores);
-    }
-    catch (const std::exception& e)
-    {
-        throw std::runtime_error(
-            "Failed to load CPU binding configuration '" + config_path + "': " + e.what());
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to load CPU binding configuration '" + config_path + "': " + e.what());
     }
 }
 
 int main(int argc, char** argv) {
-
     // process input parameters
     const std::string robot_name{"vita_boy"};
     argparse::ArgumentParser program("motion_intelligence");
@@ -350,8 +316,7 @@ int main(int argc, char** argv) {
     bool bind_main_thread_to_core{false};
     std::vector<int> assigned_main_cores;
     try {
-        get_bind_info_from_yaml(
-            base_config_path, robot_name, bind_main_thread_to_core, assigned_main_cores);
+        get_bind_info_from_yaml(base_config_path, robot_name, bind_main_thread_to_core, assigned_main_cores);
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
         return 1;
@@ -361,7 +326,7 @@ int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
 
     // init logger
-    FLAGS_alsologtostderr = 1; // info to the terminal
+    FLAGS_alsologtostderr = 1;  // info to the terminal
     const std::string log_file = "deploy.log";
     LogManager::GetInstance().Initialize(log_file, argv[0]);
 

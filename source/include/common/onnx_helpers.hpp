@@ -9,7 +9,7 @@
 #include "common/glog_sink.hpp"
 
 class XbotOnnxRuntime {
-public:
+   public:
     XbotOnnxRuntime() : session_(nullptr), init_done_(false) {
         LOG(INFO) << "[xrobot_onnxruntime] onnxruntime construct";
     }
@@ -48,29 +48,30 @@ public:
 
         // input init
         size_t num_input_nodes = session_.GetInputCount();
-        for(size_t i = 0; i < num_input_nodes; i++) {
+        for (size_t i = 0; i < num_input_nodes; i++) {
             auto inputname_ptr = session_.GetInputNameAllocated(i, allocator_);
             input_node_name_allocated_strings_.push_back(std::move(inputname_ptr));
             input_names_.push_back(input_node_name_allocated_strings_.back().get());
-            LOG(INFO) << "[xrobot_onnxruntime] input[" << i << "] name: "<< input_names_[i];
+            LOG(INFO) << "[xrobot_onnxruntime] input[" << i << "] name: " << input_names_[i];
 
             Ort::TypeInfo type_info = session_.GetInputTypeInfo(i);
             auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
             std::vector<int64_t> dims = tensor_info.GetShape();
             auto data_type = tensor_info.GetElementType();
-            LOG(INFO) << "[xrobot_onnxruntime] input[" << i << "] data type: " << convert_onnx_tensor_type_to_string(data_type);
+            LOG(INFO) << "[xrobot_onnxruntime] input[" << i
+                      << "] data type: " << convert_onnx_tensor_type_to_string(data_type);
 
-            for (auto &dim : dims) {
+            for (auto& dim : dims) {
                 // Set batch size unknown to 1
                 dim = dim == -1 ? 1 : dim;
-                LOG(INFO) << "[xrobot_onnxruntime] input[" << i << "] dim: "<< dim;
+                LOG(INFO) << "[xrobot_onnxruntime] input[" << i << "] dim: " << dim;
             }
             input_dims_.push_back(dims);
         }
 
         // output init
         size_t num_output_nodes = session_.GetOutputCount();
-        for(size_t i = 0; i < num_output_nodes; i++) {
+        for (size_t i = 0; i < num_output_nodes; i++) {
             auto outputname_ptr = session_.GetOutputNameAllocated(i, allocator_);
             output_node_name_allocated_strings_.push_back(std::move(outputname_ptr));
             output_names_.push_back(output_node_name_allocated_strings_.back().get());
@@ -80,12 +81,13 @@ public:
             auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
             std::vector<int64_t> dims = tensor_info.GetShape();
             auto data_type = tensor_info.GetElementType();
-            LOG(INFO) << "[xrobot_onnxruntime] output[" << i << "] data type: " << convert_onnx_tensor_type_to_string(data_type);
+            LOG(INFO) << "[xrobot_onnxruntime] output[" << i
+                      << "] data type: " << convert_onnx_tensor_type_to_string(data_type);
 
-            for (auto &dim : dims) {
+            for (auto& dim : dims) {
                 // Set batch size unknown to 1
                 dim = dim == -1 ? 1 : dim;
-                LOG(INFO) << "[xrobot_onnxruntime] output[" << i << "] dim: "<< dim;
+                LOG(INFO) << "[xrobot_onnxruntime] output[" << i << "] dim: " << dim;
             }
             output_dims_.push_back(dims);
         }
@@ -113,15 +115,15 @@ public:
         }
 
         // Execute inference
-        auto output_tensors = session_.Run(
-            Ort::RunOptions{nullptr},
-            input_names_.data(), input_tensors.data(), input_tensors.size(),
-            output_names_.data(), output_names_.size());
+        auto output_tensors = session_.Run(Ort::RunOptions{nullptr}, input_names_.data(), input_tensors.data(),
+                                           input_tensors.size(), output_names_.data(), output_names_.size());
 
         // Copy output data
         for (size_t i = 0; i < output_tensors.size(); ++i) {
             float* output_ptr = output_tensors[i].GetTensorMutableData<float>();
-            std::memcpy(output_data[i], output_ptr, sizeof(float) * std::accumulate(output_dims_[i].begin(), output_dims_[i].end(), 1, std::multiplies<int64_t>()));
+            std::memcpy(output_data[i], output_ptr,
+                        sizeof(float) * std::accumulate(output_dims_[i].begin(), output_dims_[i].end(), 1,
+                                                        std::multiplies<int64_t>()));
         }
 
         return true;
@@ -143,8 +145,7 @@ public:
         return std::vector<std::string>(output_names_.begin(), output_names_.end());
     }
 
-
-private:
+   private:
     std::string convert_onnx_tensor_type_to_string(ONNXTensorElementDataType data_type) {
         switch (data_type) {
             case ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT:
@@ -169,4 +170,4 @@ private:
     bool init_done_;
 };
 
-#endif // ONNX_HELPERS_HPP
+#endif  // ONNX_HELPERS_HPP

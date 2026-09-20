@@ -13,8 +13,7 @@
 #include "common/helpers.hpp"
 #include "common/benchmark.hpp"
 
-struct RLParams
-{
+struct RLParams {
     Eigen::VectorXd default_dof_pos;
     Eigen::VectorXd kp;
     Eigen::VectorXd kd;
@@ -42,21 +41,19 @@ struct RLParams
     std::vector<int> assigned_inference_cores;
 };
 
-struct Observations
-{
+struct Observations {
     Eigen::VectorXd lin_vel;
     Eigen::VectorXd ang_vel;
-    Eigen::VectorXd gravity_vec;            // 0, 0, -1
+    Eigen::VectorXd gravity_vec;  // 0, 0, -1
     Eigen::VectorXd commands;
-    Eigen::Quaternion<double> base_quat;    // w, x, y, z
+    Eigen::Quaternion<double> base_quat;  // w, x, y, z
     Eigen::VectorXd dof_pos;
     Eigen::VectorXd dof_vel;
     Eigen::VectorXd actions;
 };
 
-class FSMRLBase : public FSMState
-{
-public:
+class FSMRLBase : public FSMState {
+   public:
     FSMRLBase(std::shared_ptr<FSMData> fsm_data_ptr, StateID id, std::string name);
 
     void onEnter() override;
@@ -68,7 +65,7 @@ public:
     void init_obs();
     void init_outputs();
     void read_rl_yaml(const std::string config_path);
-    void init_onnx_model(const std::string &policy_path);
+    void init_onnx_model(const std::string& policy_path);
     void init_rl_model_inference_thread();
     virtual void run_model() = 0;
     Eigen::VectorXd covert_dof_to_action(const Eigen::VectorXd& dof_pos);
@@ -117,12 +114,12 @@ public:
     Eigen::Matrix<double, 3, 1> head_q_start_time_;
     Eigen::Matrix<double, 3, 1> last_head_q_cmd_;
 
-protected:
+   protected:
     static bool bind_current_thread_to_cpus(const std::vector<int>& core_ids);
     static bool bind_current_thread_to_cpu(int core_id);
     static bool bind_thread_to_cpu(std::thread& thread, int core_id);
 
-private:
+   private:
 };
 
 #endif  // VITA_BOY_FSM_RL_BASE_HPP

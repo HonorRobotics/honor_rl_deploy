@@ -281,6 +281,31 @@ Movement (while in Locomotion): `W`/`S` forward / backward (`vx`); `A`/`D` straf
 1. For sim2sim, the table above requires the terminal running `run_motion_intelligence.sh` to be focused with a mouse click; MuJoCo-side keys require the MuJoCo window to be focused. Once in Locomotion, we suggest clicking the MuJoCo window and pressing `9` to set the robot down, then clicking back on the `run_motion_intelligence.sh` terminal to use the table above.
 2. Suggested first bring-up order — **Passive → Recovery → Locomotion → Tracking → Locomotion → Damper**.
 
+## 🔍 Debugging
+
+### Useful ROS 2 topics
+
+```bash
+# In a new terminal
+ros2 topic list
+
+# print a topic's content
+ros2 topic echo --once /xlab/hr/low_state
+
+# check publish rate
+ros2 topic hz /xlab/hr/low_state
+```
+
+### Observe glog logs
+
+```bash
+# In a new terminal
+cd /path/to/your/honor_rl_deploy
+
+# print the log content
+tail -f source/build/deploy.log
+```
+
 ## 🛠️ Development
 
 ```text
@@ -298,3 +323,7 @@ Movement (while in Locomotion): `W`/`S` forward / backward (`vx`); `A`/`D` straf
         ├── run_motion_intelligence.sh     # builds the project + controller
         └── fastdds_profile.xml.template   # Fast DDS interface whitelist config
 ```
+
+## 📄 License
+
+This project is licensed under the [Apache License 2.0](LICENSE).

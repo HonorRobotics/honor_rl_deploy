@@ -7,18 +7,15 @@
 
 #include "interaction_msgs/msg/low_command.hpp"
 
-class LowCommandPublisher
-{
-public:
-  explicit LowCommandPublisher(
-    rclcpp::Node::SharedPtr node,
-    const std::string& low_cmd_topic_name);
+class LowCommandPublisher {
+   public:
+    explicit LowCommandPublisher(rclcpp::Node::SharedPtr node, const std::string& low_cmd_topic_name);
 
-  void publish(const interaction_msgs::msg::LowCommand& cmd);
+    void publish(const interaction_msgs::msg::LowCommand& cmd);
 
-private:
-  rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<interaction_msgs::msg::LowCommand>::SharedPtr publisher_;
+   private:
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Publisher<interaction_msgs::msg::LowCommand>::SharedPtr publisher_;
 };
 
-#endif // LOW_COMMAND_PUBLISHER_HPP
+#endif  // LOW_COMMAND_PUBLISHER_HPP

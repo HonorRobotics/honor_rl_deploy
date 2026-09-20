@@ -3,9 +3,8 @@
 
 #include "state_machine/fsm_rl_base.hpp"
 
-class FSMStateRLLocomotion : public FSMRLBase
-{
-public:
+class FSMStateRLLocomotion : public FSMRLBase {
+   public:
     // Constructor
     FSMStateRLLocomotion(std::shared_ptr<FSMData> fsm_data_ptr);
 
@@ -42,7 +41,7 @@ public:
     // Update action
     void update_action();
 
-private:
+   private:
     Eigen::Vector3d locomotion_command_;
     std::vector<double> obs_vec_;
     std::vector<double> obs_history_vec_;
@@ -54,4 +53,4 @@ private:
     void reset_input();
 };
 
-#endif // VITA_BOY_FSM_RL_LOCOMOTION_HPP
+#endif  // VITA_BOY_FSM_RL_LOCOMOTION_HPP

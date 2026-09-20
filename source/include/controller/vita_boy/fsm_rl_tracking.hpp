@@ -10,12 +10,10 @@
 
 #include "state_machine/fsm_rl_base.hpp"
 
-class FSMStateRLTracking : public FSMRLBase
-{
-public:
+class FSMStateRLTracking : public FSMRLBase {
+   public:
     // Constructor
-    FSMStateRLTracking(std::shared_ptr<FSMData> fsm_data_ptr, StateID state_id,
-                       std::string state_name);
+    FSMStateRLTracking(std::shared_ptr<FSMData> fsm_data_ptr, StateID state_id, std::string state_name);
 
     // Destructor
     ~FSMStateRLTracking() override;
@@ -32,35 +30,30 @@ public:
     // Resolve the next state
     StateID check_transition() override;
 
-private:
+   private:
     static constexpr int kNumActions = 29;
     static constexpr int kNumProprioceptiveObservations = 96;
     static constexpr int kNumDemoObservations = 58;
     static constexpr int kAnchorBodyIndex = 9;
     static constexpr size_t kInvalidId = std::numeric_limits<size_t>::max();
 
-    using RowMajorMatrixXf =
-        Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+    using RowMajorMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
     // ONNX policy config
-    struct ModelConfig
-    {
+    struct ModelConfig {
         size_t model_id{0};
         std::string model_file;
         int prop_hist{1};
         int demo_hist{1};
 
         // Observation buffer size
-        int observation_buffer_size() const
-        {
-            return prop_hist * kNumProprioceptiveObservations +
-                   demo_hist * kNumDemoObservations;
+        int observation_buffer_size() const {
+            return prop_hist * kNumProprioceptiveObservations + demo_hist * kNumDemoObservations;
         }
     };
 
     // Motion config
-    struct MotionConfig
-    {
+    struct MotionConfig {
         size_t motion_id{0};
         size_t model_id{0};
         std::string motion_file;
@@ -69,8 +62,7 @@ private:
     };
 
     // Loaded motion data
-    struct MotionData
-    {
+    struct MotionData {
         MotionConfig config;
         int fps{0};
         RowMajorMatrixXf joint_pos;
@@ -78,15 +70,13 @@ private:
         RowMajorMatrixXf anchor_quat_w;
 
         // Frame count
-        size_t frame_count() const
-        {
+        size_t frame_count() const {
             return static_cast<size_t>(joint_pos.rows());
         }
     };
 
     // Loaded ONNX policy
-    struct PolicyRuntime
-    {
+    struct PolicyRuntime {
         ModelConfig config;
         std::string path;
         std::unique_ptr<XbotOnnxRuntime> session;
@@ -163,9 +153,8 @@ private:
     const PolicyRuntime& active_policy() const;
 
     // Compute torso orientation
-    Eigen::Quaterniond compute_torso_quat(
-        const Eigen::Quaterniond& pelvis_quat,
-        const Eigen::Vector3d& waist_position) const;
+    Eigen::Quaterniond compute_torso_quat(const Eigen::Quaterniond& pelvis_quat,
+                                          const Eigen::Vector3d& waist_position) const;
 
     std::string config_directory_;
     std::vector<ModelConfig> model_configs_;
@@ -175,8 +164,8 @@ private:
     std::unordered_map<size_t, MotionData> motions_by_id_;
 
     size_t default_motion_id_{0};
-    size_t active_motion_id_{kInvalidId};    // guarded by motion_mutex_
-    size_t active_policy_index_{0};          // guarded by motion_mutex_
+    size_t active_motion_id_{kInvalidId};  // guarded by motion_mutex_
+    size_t active_policy_index_{0};        // guarded by motion_mutex_
     size_t last_rejected_motion_id_{kInvalidId};
 
     std::vector<double> obs_prop_vec_;

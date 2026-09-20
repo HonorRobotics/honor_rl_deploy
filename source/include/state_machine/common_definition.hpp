@@ -13,14 +13,11 @@ typedef enum StateID {
   RL_TRACKING       = 12100,
 } StateID;
 
-
-static constexpr int NUM_MOTORS = 35; // motor num
+static constexpr int NUM_MOTORS = 35;  // motor num
 
 template <typename T>
-struct RobotCommand
-{
-    struct MotorCommand
-    {
+struct RobotCommand {
+    struct MotorCommand {
         Eigen::Matrix<T, NUM_MOTORS, 1> mode = Eigen::Matrix<T, NUM_MOTORS, 1>::Zero();
         Eigen::Matrix<T, NUM_MOTORS, 1> q = Eigen::Matrix<T, NUM_MOTORS, 1>::Zero();
         Eigen::Matrix<T, NUM_MOTORS, 1> dq = Eigen::Matrix<T, NUM_MOTORS, 1>::Zero();
@@ -31,10 +28,8 @@ struct RobotCommand
 };
 
 template <typename T>
-struct RobotState
-{
-    struct IMU
-    {
+struct RobotState {
+    struct IMU {
         // quat (w,x,y,z)
         Eigen::Quaternion<T> quaternion = Eigen::Quaternion<T>(1.0, 0.0, 0.0, 0.0);
 
@@ -44,8 +39,7 @@ struct RobotState
         Eigen::Matrix<T, 3, 1> euler_zyx = Eigen::Matrix<T, 3, 1>::Zero();
     } imu;
 
-    struct MotorState
-    {
+    struct MotorState {
         // motor state
         Eigen::Matrix<T, NUM_MOTORS, 1> q = Eigen::Matrix<T, NUM_MOTORS, 1>::Zero();
         Eigen::Matrix<T, NUM_MOTORS, 1> dq = Eigen::Matrix<T, NUM_MOTORS, 1>::Zero();
@@ -61,8 +55,7 @@ struct RobotState
 };
 
 template <typename T>
-struct DesiredCommand
-{
+struct DesiredCommand {
     StateID state_id;
     size_t motion_id;
     Eigen::Matrix<T, 3, 1> base_pos = Eigen::Matrix<T, 3, 1>::Zero();

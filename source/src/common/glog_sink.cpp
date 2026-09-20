@@ -5,13 +5,10 @@ LogManager::CustomFileSink::CustomFileSink(const std::string& base_filename)
       work_guard_(boost::asio::make_work_guard(io_context_)),
       running_(true),
       flush_timer_(io_context_) {
-
     // create thread pool
     thread_pool_.reserve(thread_pool_size_);
     for (size_t i = 0; i < thread_pool_size_; ++i) {
-        thread_pool_.emplace_back([this] {
-            io_context_.run();
-        });
+        thread_pool_.emplace_back([this] { io_context_.run(); });
     }
     std::ofstream outfile(base_filename_, std::ios_base::app);
     if (!outfile) {
@@ -59,8 +56,7 @@ void LogManager::CustomFileSink::send(
 
     // microsecond
     char full_time_buffer[50];
-    snprintf(full_time_buffer, sizeof(full_time_buffer), "%s.%06ld",
-             time_buffer, static_cast<long>(tv.tv_usec));
+    snprintf(full_time_buffer, sizeof(full_time_buffer), "%s.%06ld", time_buffer, static_cast<long>(tv.tv_usec));
 
     // Create log message object
     LogMessage log_msg{
@@ -96,11 +92,13 @@ void LogManager::CustomFileSink::send(
 }
 
 void LogManager::CustomFileSink::start_flush_timer() {
-    if (!running_) return;
+    if (!running_)
+        return;
 
     flush_timer_.expires_after(std::chrono::seconds(3));
     flush_timer_.async_wait([this](const boost::system::error_code& ec) {
-        if (ec) return; // Timer was cancelled
+        if (ec)
+            return;  // Timer was cancelled
 
         // Flush logs when the timer fires
         flush_logs();
@@ -114,7 +112,8 @@ void LogManager::CustomFileSink::flush_logs() {
     std::queue<LogMessage> temp_queue;
     {
         std::lock_guard<std::mutex> lock(queue_mutex_);
-        if (log_queue_.empty()) return;
+        if (log_queue_.empty())
+            return;
         std::swap(log_queue_, temp_queue);
     }
     {

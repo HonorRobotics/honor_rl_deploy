@@ -13,16 +13,17 @@ struct MotionConfig {
 
     // Loading configuration from a YAML node
     void load_from_yaml(const YAML::Node& config) {
-        if (config["motion_id"]) motion_id = config["motion_id"].as<size_t>();
-        if (config["motion_name"]) motion_name = config["motion_name"].as<std::string>();
-        if (config["model_id"]) model_id = config["model_id"].as<size_t>();
+        if (config["motion_id"])
+            motion_id = config["motion_id"].as<size_t>();
+        if (config["motion_name"])
+            motion_name = config["motion_name"].as<std::string>();
+        if (config["model_id"])
+            model_id = config["model_id"].as<size_t>();
     }
 
     // Print motion information
     void print() const {
-        LOG(INFO) << "\nMotion ID: " << motion_id
-                  << ", Name: " << motion_name
-                  << ", Model ID: " << model_id;
+        LOG(INFO) << "\nMotion ID: " << motion_id << ", Name: " << motion_name << ", Model ID: " << model_id;
     }
 };
 
@@ -34,17 +35,19 @@ struct Motion2Config {
 
     // Loading configuration from a YAML node
     void load_from_yaml(const YAML::Node& config) {
-        if (config["motion_id"]) motion_id = config["motion_id"].as<size_t>();
-        if (config["motion_name"]) motion_name = config["motion_name"].as<std::string>();
-        if (config["model_id"]) model_id = config["model_id"].as<size_t>();
-        if (config["wait_time"]) wait_time = config["wait_time"].as<double>();
+        if (config["motion_id"])
+            motion_id = config["motion_id"].as<size_t>();
+        if (config["motion_name"])
+            motion_name = config["motion_name"].as<std::string>();
+        if (config["model_id"])
+            model_id = config["model_id"].as<size_t>();
+        if (config["wait_time"])
+            wait_time = config["wait_time"].as<double>();
     }
 
     // Print motion information
     void print() const {
-        LOG(INFO) << "\nMotion ID: " << motion_id
-                  << ", Name: " << motion_name
-                  << ", Model ID: " << model_id
+        LOG(INFO) << "\nMotion ID: " << motion_id << ", Name: " << motion_name << ", Model ID: " << model_id
                   << ", Wait Time: " << wait_time;
     }
 };
@@ -86,4 +89,4 @@ inline Eigen::VectorXi get_vector_int_from_yaml(const YAML::Node& node) {
     return vec;
 }
 
-#endif // YAML_HELPERS_HPP
+#endif  // YAML_HELPERS_HPP
